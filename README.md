@@ -8,7 +8,19 @@ This project is the assembly through which a complete distro of Quorum by Consen
 
 On a Mac machine, install required binaries for all projects:
 
-`> brew install berkeley-db libsodium-dev build-essential`
+`$> brew install berkeley-db libsodium-dev build-essential`
+
+## Run the distro assembly
+
+To build all tarball packages for Mac OS X and Ubuntu, run:
+```
+$> make
+```
+
+To create the Docker images, you can run:
+```
+$> make docker
+```
 
 ## Signing
 
