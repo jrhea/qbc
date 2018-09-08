@@ -88,7 +88,7 @@ build/.docker: build/qbc-$(VERSION)-linux-386.tar.gz build/qbc-$(VERSION)-darwin
 	docker build -f docker/crux.Dockerfile -t consensys/crux:$(VERSION) .
 	touch build/.docker
 	
-build/.dockerpush: build/.docker check_bintray
+build/.dockerpush: build/.docker
 	docker login -u $(BINTRAY_USER) -p $(BINTRAY_KEY) consensys-docker-qbc.bintray.io
 	docker tag consensys/quorum:$(VERSION) consensys-docker-qbc.bintray.io/consensys/quorum:$(VERSION)
 	docker push consensys-docker-qbc.bintray.io/consensys/quorum:$(VERSION)
@@ -110,7 +110,7 @@ build/qbc-$(VERSION)-linux-386.tar.gz.asc: build/qbc-$(VERSION)-linux-386.tar.gz
 build/qbc-$(VERSION)-darwin-64.tar.gz.asc: build/qbc-$(VERSION)-darwin-64.tar.gz
 	gpg --detach-sign -o build/qbc-$(VERSION)-darwin-64.tar.gz.asc build/qbc-$(VERSION)-darwin-64.tar.gz
 	
-build/.tgzpush: build/qbc-$(VERSION)-linux-386.tar.gz.asc build/qbc-$(VERSION)-darwin-64.tar.gz.asc check_bintray
+build/.tgzpush: build/qbc-$(VERSION)-linux-386.tar.gz.asc build/qbc-$(VERSION)-darwin-64.tar.gz.asc
 	curl -T build/qbc-$(VERSION)-linux-386.tar.gz -u$(BINTRAY_USER):$(BINTRAY_KEY) -H "X-Bintray-Package:qbc" -H "X-Bintray-Version:$(VERSION)" https://api.bintray.com/content/consensys/binaries/qbc/$(VERSION)/qbc-$(VERSION)-linux-386.tar.gz
 	curl -T build/qbc-$(VERSION)-linux-386.tar.gz.asc -u$(BINTRAY_USER):$(BINTRAY_KEY) -H "X-Bintray-Package:qbc" -H "X-Bintray-Version:$(VERSION)" https://api.bintray.com/content/consensys/binaries/qbc/$(VERSION)/qbc-$(VERSION)-linux-386.tar.gz.asc
 	curl -T build/qbc-$(VERSION)-darwin-64.tar.gz -u$(BINTRAY_USER):$(BINTRAY_KEY) -H "X-Bintray-Package:qbc" -H "X-Bintray-Version:$(VERSION)" https://api.bintray.com/content/consensys/binaries/qbc/$(VERSION)/qbc-$(VERSION)-darwin-64.tar.gz
@@ -123,5 +123,5 @@ tag:
 release: tag build/.dockerpush build/.tgzpush
 	git push origin master --tags
 
-test:
+test: build/.docker
 	$(error TODO)
