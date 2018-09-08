@@ -1,8 +1,22 @@
 # Quorum By ConsenSys
 
-This project is the assembly through which a complete distro of Quorum by ConsenSys is assembled.
+Distribution of Quorum and associated projects, tested and supported by ConsenSys.
 
-# Prerequisites
+# Download
+
+You can download binaries created with this project under:
+   https://consensys.bintray.com/binaries/qbc/0.1/
+   
+# Docker images
+
+You can pull Docker images for Quorum, Crux and Tessera:
+```
+docker pull consensys-docker-qbc.bintray.io/qbc/quorum:0.1
+docker pull consensys-docker-qbc.bintray.io/qbc/crux:0.1
+docker pull consensys-docker-qbc.bintray.io/qbc/tessera:0.1
+```
+
+# Development
 
 ## Binaries
 
@@ -10,18 +24,40 @@ On a Mac machine, install required binaries for all projects:
 
 `$> brew install berkeley-db libsodium-dev build-essential`
 
-## Run the distro assembly
+# Building
 
-To build all tarball packages for Mac OS X and Ubuntu, run:
+To build the tarball package for Linux, run:
 ```
-$> make
+$> make build/qbc-$(VERSION)-linux-386.tar.gz
+```
+
+To build the tarball package for Mac OS X, run:
+```
+$> make build/qbc-$(VERSION)-darwin-64.tar.gz
 ```
 
 To create the Docker images, you can run:
 ```
-$> make docker
+$> make
 ```
 
-## Signing
+# Testing
 
-You will need to associate a GPG key with the packages being built.
+Run:
+```
+$> docker test
+```
+
+# Release
+
+Make sure the version is correct in the Makefile.
+
+Run:
+```
+$> make BINTRAY_USER=<YOUR USERNAME> BINTRAY_KEY=<YOUR KEY> release
+```
+
+Once the process has run:
+* Update the download links and the Docker image versions in the README.
+* Increase the version in the Makefile.
+* Commit and push changes.
