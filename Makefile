@@ -1,4 +1,4 @@
-VERSION=0.1
+VERSION=0.2
 TESSERA_VERSION=0.6
 QUORUM_VERSION=v2.0.3-grpc
 CRUX_VERSION=v1.0.1
@@ -118,7 +118,7 @@ build/.tgzpush: build/qbc-$(VERSION)-linux-386.tar.gz.asc build/qbc-$(VERSION)-d
 	touch build/.tgzpush
 	
 tag:
-	git tag $(VERSION)
+	git tag -s $(VERSION)
 
 release: tag build/.dockerpush build/.tgzpush
 	git push origin master --tags
