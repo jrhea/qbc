@@ -8,7 +8,7 @@ BINTRAY_USER=jdoe
 BINTRAY_KEY=pass
 
 .PHONY: clean release check_bintray tag test
-.DEFAULT_GOAL := build/.docker
+.DEFAULT_GOAL := build/.docker-$(VERSION)
 		
 build/qbc-$(VERSION)-linux-386.tar.gz: build/tessera-$(TESSERA_VERSION).tar.gz build/quorum-$(QUORUM_VERSION)-linux-386.tar.gz build/crux-$(CRUX_VERSION)-linux-386.tar.gz
 	cd build && tar czf qbc-$(VERSION)-linux-386.tar.gz tessera-$(TESSERA_VERSION).tar.gz quorum-$(QUORUM_VERSION)-linux-386.tar.gz crux-$(CRUX_VERSION)-linux-386.tar.gz
@@ -69,11 +69,11 @@ crux-$(CRUX_VERSION)-linux-386:
 	git clone --branch $(CRUX_VERSION) --depth 1 https://github.com/blk-io/crux.git crux-$(CRUX_VERSION)-linux-386
 	cat chimera-api-crux-v1.0.1.patch >> crux-$(CRUX_VERSION)-linux-386/Gopkg.toml
 	
-build/.docker-build:
+build/.docker-build-$(VERSION):
 	docker build -f docker/crux-build.Dockerfile -t consensys/crux-build:$(VERSION) .
-	touch build/.docker-build
+	touch build/.docker-build-$(VERSION)
 	
-crux-$(CRUX_VERSION)-linux-386/bin/crux: crux-$(CRUX_VERSION)-linux-386 build/.docker-build
+crux-$(CRUX_VERSION)-linux-386/bin/crux: crux-$(CRUX_VERSION)-linux-386 build/.docker-build-$(VERSION)
 	docker run -it -v $(CURDIR)/crux-$(CRUX_VERSION)-linux-386:/tmp/crux consensys/crux-build:$(VERSION)
 
 build/crux-$(CRUX_VERSION)-linux-386.tar.gz: crux-$(CRUX_VERSION)-linux-386/bin/crux
@@ -82,13 +82,13 @@ build/crux-$(CRUX_VERSION)-linux-386.tar.gz: crux-$(CRUX_VERSION)-linux-386/bin/
 	tar rf build/crux-$(CRUX_VERSION)-linux-386.tar -C crux-$(CRUX_VERSION)-linux-386/bin crux
 	gzip build/crux-$(CRUX_VERSION)-linux-386.tar
 	
-build/.docker: build/qbc-$(VERSION)-linux-386.tar.gz build/qbc-$(VERSION)-darwin-64.tar.gz
+build/.docker-$(VERSION): build/qbc-$(VERSION)-linux-386.tar.gz build/qbc-$(VERSION)-darwin-64.tar.gz
 	docker build -f docker/quorum.Dockerfile -t consensys/quorum:$(VERSION) .
 	docker build -f docker/tessera.Dockerfile -t consensys/tessera:$(VERSION) .
 	docker build -f docker/crux.Dockerfile -t consensys/crux:$(VERSION) .
-	touch build/.docker
+	touch build/.docker-$(VERSION)
 	
-build/.dockerpush: build/.docker
+build/.dockerpush-$(VERSION): build/.docker-$(VERSION)
 	docker login -u $(BINTRAY_USER) -p $(BINTRAY_KEY) consensys-docker-qbc.bintray.io
 	docker tag consensys/quorum:$(VERSION) consensys-docker-qbc.bintray.io/consensys/quorum:$(VERSION)
 	docker push consensys-docker-qbc.bintray.io/consensys/quorum:$(VERSION)
@@ -96,7 +96,7 @@ build/.dockerpush: build/.docker
 	docker push consensys-docker-qbc.bintray.io/consensys/crux:$(VERSION)
 	docker tag consensys/tessera:$(VERSION) consensys-docker-qbc.bintray.io/consensys/tessera:$(VERSION)
 	docker push consensys-docker-qbc.bintray.io/consensys/tessera:$(VERSION)
-	touch build/.dockerpush
+	touch build/.dockerpush-$(VERSION)
 	
 clean:
 	rm -Rf crux-*
@@ -110,18 +110,18 @@ build/qbc-$(VERSION)-linux-386.tar.gz.asc: build/qbc-$(VERSION)-linux-386.tar.gz
 build/qbc-$(VERSION)-darwin-64.tar.gz.asc: build/qbc-$(VERSION)-darwin-64.tar.gz
 	gpg --detach-sign -o build/qbc-$(VERSION)-darwin-64.tar.gz.asc build/qbc-$(VERSION)-darwin-64.tar.gz
 	
-build/.tgzpush: build/qbc-$(VERSION)-linux-386.tar.gz.asc build/qbc-$(VERSION)-darwin-64.tar.gz.asc
+build/.tgzpush-$(VERSION): build/qbc-$(VERSION)-linux-386.tar.gz.asc build/qbc-$(VERSION)-darwin-64.tar.gz.asc
 	curl -T build/qbc-$(VERSION)-linux-386.tar.gz -u$(BINTRAY_USER):$(BINTRAY_KEY) -H "X-Bintray-Package:qbc" -H "X-Bintray-Version:$(VERSION)" https://api.bintray.com/content/consensys/binaries/qbc/$(VERSION)/qbc-$(VERSION)-linux-386.tar.gz
 	curl -T build/qbc-$(VERSION)-linux-386.tar.gz.asc -u$(BINTRAY_USER):$(BINTRAY_KEY) -H "X-Bintray-Package:qbc" -H "X-Bintray-Version:$(VERSION)" https://api.bintray.com/content/consensys/binaries/qbc/$(VERSION)/qbc-$(VERSION)-linux-386.tar.gz.asc
 	curl -T build/qbc-$(VERSION)-darwin-64.tar.gz -u$(BINTRAY_USER):$(BINTRAY_KEY) -H "X-Bintray-Package:qbc" -H "X-Bintray-Version:$(VERSION)" https://api.bintray.com/content/consensys/binaries/qbc/$(VERSION)/qbc-$(VERSION)-darwin-64.tar.gz
 	curl -T build/qbc-$(VERSION)-darwin-64.tar.gz.asc -u$(BINTRAY_USER):$(BINTRAY_KEY) -H "X-Bintray-Package:qbc" -H "X-Bintray-Version:$(VERSION)" https://api.bintray.com/content/consensys/binaries/qbc/$(VERSION)/qbc-$(VERSION)-darwin-64.tar.gz.asc
-	touch build/.tgzpush
+	touch build/.tgzpush-$(VERSION)
 	
 tag:
 	git tag -s $(VERSION)
 
-release: tag build/.dockerpush build/.tgzpush
+release: tag build/.dockerpush-$(VERSION) build/.tgzpush-$(VERSION)
 	git push origin master --tags
 
-test: build/.docker
+test: build/.docker-$(VERSION)
 	$(error TODO)
