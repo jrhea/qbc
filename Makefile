@@ -43,8 +43,8 @@ build/quorum-$(QUORUM_VERSION)-darwin-64.tar.gz: quorum-$(QUORUM_VERSION)-darwin
 quorum-$(QUORUM_VERSION)-linux-386:
 	git clone --branch $(QUORUM_VERSION) --depth 1 https://github.com/ConsenSys/quorum.git quorum-$(QUORUM_VERSION)-linux-386
 	
-quorum-$(QUORUM_VERSION)-linux-386/build/bin/geth: quorum-$(QUORUM_VERSION)-linux-386
-	cd quorum-$(QUORUM_VERSION)-linux-386 && make
+quorum-$(QUORUM_VERSION)-linux-386/build/bin/geth: quorum-$(QUORUM_VERSION)-linux-386 build/.docker-build-$(VERSION)
+	docker run -it -v $(CURDIR)/quorum-$(QUORUM_VERSION)-linux-386:/tmp/geth consensys/linux-build:$(VERSION) ./build-geth.sh
 	
 build/quorum-$(QUORUM_VERSION)-linux-386.tar.gz: quorum-$(QUORUM_VERSION)-linux-386/build/bin/geth
 	mkdir -p build
@@ -70,11 +70,11 @@ crux-$(CRUX_VERSION)-linux-386:
 	cat chimera-api-crux-v1.0.1.patch >> crux-$(CRUX_VERSION)-linux-386/Gopkg.toml
 	
 build/.docker-build-$(VERSION):
-	docker build -f docker/crux-build.Dockerfile -t consensys/crux-build:$(VERSION) .
+	docker build -f docker/linux-build.Dockerfile -t consensys/linux-build:$(VERSION) .
 	touch build/.docker-build-$(VERSION)
 	
 crux-$(CRUX_VERSION)-linux-386/bin/crux: crux-$(CRUX_VERSION)-linux-386 build/.docker-build-$(VERSION)
-	docker run -it -v $(CURDIR)/crux-$(CRUX_VERSION)-linux-386:/tmp/crux consensys/crux-build:$(VERSION)
+	docker run -it -v $(CURDIR)/crux-$(CRUX_VERSION)-linux-386:/tmp/crux consensys/linux-build:$(VERSION)
 
 build/crux-$(CRUX_VERSION)-linux-386.tar.gz: crux-$(CRUX_VERSION)-linux-386/bin/crux
 	mkdir -p build
@@ -86,6 +86,9 @@ build/.docker-$(VERSION): build/qbc-$(VERSION)-linux-386.tar.gz build/qbc-$(VERS
 	docker build -f docker/quorum.Dockerfile -t consensys/quorum:$(VERSION) .
 	docker build -f docker/tessera.Dockerfile -t consensys/tessera:$(VERSION) .
 	docker build -f docker/crux.Dockerfile -t consensys/crux:$(VERSION) .
+	docker tag consensys/crux:$(VERSION) consensys/crux:latest
+	docker tag consensys/quorum:$(VERSION) consensys/quorum:latest
+	docker tag consensys/tessera:$(VERSION) consensys/tessera:latest
 	touch build/.docker-$(VERSION)
 	
 build/.dockerpush-$(VERSION): build/.docker-$(VERSION)

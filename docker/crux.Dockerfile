@@ -7,6 +7,9 @@ RUN cd /opt && \
   rm /tmp/crux.tar.gz && \
   chmod +x /opt/crux
   
-ENTRYPOINT ["/opt/crux"]
+COPY docker/crux-start.sh /opt/crux-start.sh
 
+RUN chmod +x /opt/crux-start.sh
+  
+CMD ["/opt/crux-start.sh"]
 

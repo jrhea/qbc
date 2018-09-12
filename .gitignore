@@ -2,3 +2,7 @@ tessera-*
 quorum-*
 build
 crux-*
+.DS_Store
+tests/crux_quorum/.start
+tests/crux_quorum/.workdir
+tests/crux_quorum/.check_up
