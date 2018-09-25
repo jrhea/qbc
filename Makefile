@@ -32,12 +32,12 @@ quorum-$(QUORUM_VERSION)-darwin-64:
 	git clone --branch $(QUORUM_VERSION) --depth 1 https://github.com/ConsenSys/quorum.git quorum-$(QUORUM_VERSION)-darwin-64
 	
 quorum-$(QUORUM_VERSION)-darwin-64/build/bin/geth: quorum-$(QUORUM_VERSION)-darwin-64
-	cd quorum-$(QUORUM_VERSION)-darwin-64 && make
+	cd quorum-$(QUORUM_VERSION)-darwin-64 && make all
 	
 build/quorum-$(QUORUM_VERSION)-darwin-64.tar.gz: quorum-$(QUORUM_VERSION)-darwin-64/build/bin/geth
 	mkdir -p build
 	tar cf build/quorum-$(QUORUM_VERSION)-darwin-64.tar -C docs/quorum .
-	tar rf build/quorum-$(QUORUM_VERSION)-darwin-64.tar -C quorum-$(QUORUM_VERSION)-darwin-64/build/bin geth
+	tar rf build/quorum-$(QUORUM_VERSION)-darwin-64.tar -C quorum-$(QUORUM_VERSION)-darwin-64/build/bin geth bootnode
 	gzip build/quorum-$(QUORUM_VERSION)-darwin-64.tar
 	
 quorum-$(QUORUM_VERSION)-linux-386:
@@ -49,7 +49,7 @@ quorum-$(QUORUM_VERSION)-linux-386/build/bin/geth: quorum-$(QUORUM_VERSION)-linu
 build/quorum-$(QUORUM_VERSION)-linux-386.tar.gz: quorum-$(QUORUM_VERSION)-linux-386/build/bin/geth
 	mkdir -p build
 	tar cf build/quorum-$(QUORUM_VERSION)-linux-386.tar -C docs/quorum .
-	tar rf build/quorum-$(QUORUM_VERSION)-linux-386.tar -C quorum-$(QUORUM_VERSION)-linux-386/build/bin geth
+	tar rf build/quorum-$(QUORUM_VERSION)-linux-386.tar -C quorum-$(QUORUM_VERSION)-linux-386/build/bin geth bootnode
 	gzip build/quorum-$(QUORUM_VERSION)-linux-386.tar
 	
 crux-$(CRUX_VERSION):

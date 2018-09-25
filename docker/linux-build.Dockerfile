@@ -13,5 +13,5 @@ RUN cd /opt && wget -q https://storage.googleapis.com/golang/go${GOVERSION}.linu
     mkdir $GOPATH
 
 RUN echo "#!/bin/bash\ncd /tmp/crux && make setup && make build" > build.sh && chmod +x build.sh
-RUN echo "#!/bin/bash\ncd /tmp/geth && make" > build-geth.sh && chmod +x build-geth.sh
+RUN echo "#!/bin/bash\ncd /tmp/geth && make all" > build-geth.sh && chmod +x build-geth.sh
 CMD "./build.sh"
