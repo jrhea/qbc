@@ -32,7 +32,7 @@ You can use two separate files to organize the network:
 Both files have the same format. Here is an example.
 
 ```
-["enode://5c3c98e3a28a87e73ab40468212de7ab6cf0e2afa77781295925f32369c00baf30f664e52f8d152c02b069d6daa1a61f477e3c1eca64403529dfbd0c31e09524@10.5.0.11:21000?discport=0"  "enode://9b98a96a8ba080ff4c7863e5fdf3211a7082b612d5897ae4eed687eec391eb421c8ed7c572ca17f257441a0cb544a7c184244dfdf9a114f5251da3dac72e7585@10.5.0.12:21000?discport=0]
+["enode://abcde....1234@10.5.0.11:21000?discport=0, "enode://abcdde...6543@10.5.0.12:21000?discport=0]
 ```
 
 Each enode URI is built with the public key of the node, associated with its host name and RPC port. The discport parameter is set to zero as no discovery is performed on the network.
@@ -128,6 +128,7 @@ services:
 ## Check the network is up and running.
 
 On the node, perform the following to check Constellation is up and running:
+
 `curl -vv http://localhost:9000/upcheck`
 
 Check the quorum logs to check the node came up without issues.
