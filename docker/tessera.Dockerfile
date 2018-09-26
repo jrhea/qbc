@@ -8,8 +8,10 @@ RUN cd /opt && \
   tar xzf /tmp/tessera.tar.gz && \
   rm /tmp/tessera.tar.gz
   
+COPY docker/tessera-start.sh /opt/tessera-start.sh
+
+RUN chmod +x /opt/tessera-start.sh
+  
 ENV JAVA_OPTS="-Xmx1024m"
   
-ENTRYPOINT ["java", "-jar", "tessera-app-*.jar", $JAVA_OPTS]
-
-
+CMD ["/opt/tessera-start.sh"]

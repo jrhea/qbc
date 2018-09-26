@@ -1,7 +1,7 @@
-tessera-*
-quorum-*
+/tessera-*
+/quorum-*
 build
-crux-*
+/crux-*
 .DS_Store
 tests/crux_quorum/.start
 tests/crux_quorum/.workdir
