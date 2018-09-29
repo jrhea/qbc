@@ -1,6 +1,6 @@
 VERSION=0.2
-TESSERA_VERSION=0.6
-QUORUM_VERSION=v2.0.3-grpc
+TESSERA_VERSION=0.6.1-qbc
+QUORUM_VERSION=master
 CRUX_VERSION=v1.0.1
 GOOS=darwin
 GOARCH=386
@@ -17,10 +17,11 @@ build/qbc-$(VERSION)-darwin-64.tar.gz: build/tessera-$(TESSERA_VERSION).tar.gz b
 	cd build && tar czf qbc-$(VERSION)-darwin-64.tar.gz tessera-$(TESSERA_VERSION).tar.gz quorum-$(QUORUM_VERSION)-darwin-64.tar.gz crux-$(CRUX_VERSION)-darwin-64.tar.gz
 
 tessera-$(TESSERA_VERSION):
-	git clone --branch tessera-$(TESSERA_VERSION) --depth 1 https://github.com/jpmorganchase/tessera.git tessera-$(TESSERA_VERSION)
+	git clone --branch $(TESSERA_VERSION) --depth 1 https://github.com/consensys/tessera.git tessera-$(TESSERA_VERSION)
 
 tessera-$(TESSERA_VERSION)/tessera-app/target/tessera-app-$(TESSERA_VERSION)-app.jar: tessera-$(TESSERA_VERSION)
 	cd tessera-$(TESSERA_VERSION) && mvn package
+	cd tessera-$(TESSERA_VERSION)/tessera-app/target/ && mv tessera-app-*-app.jar tessera-app-$(TESSERA_VERSION)-app.jar
 
 build/tessera-$(TESSERA_VERSION).tar.gz: tessera-$(TESSERA_VERSION)/tessera-app/target/tessera-app-$(TESSERA_VERSION)-app.jar
 	mkdir -p build
@@ -82,16 +83,25 @@ build/crux-$(CRUX_VERSION)-linux-386.tar.gz: crux-$(CRUX_VERSION)-linux-386/bin/
 	tar rf build/crux-$(CRUX_VERSION)-linux-386.tar -C crux-$(CRUX_VERSION)-linux-386/bin crux
 	gzip build/crux-$(CRUX_VERSION)-linux-386.tar
 	
-build/.docker-$(VERSION): build/qbc-$(VERSION)-linux-386.tar.gz build/qbc-$(VERSION)-darwin-64.tar.gz
+build/.docker-$(VERSION)-quorum: build/qbc-$(VERSION)-linux-386.tar.gz build/qbc-$(VERSION)-darwin-64.tar.gz
 	docker build -f docker/quorum.Dockerfile -t consensys/quorum:$(VERSION) .
-	docker build -f docker/tessera.Dockerfile -t consensys/tessera:$(VERSION) .
+	docker tag consensys/quorum:$(VERSION) consensys/quorum:latest
+	touch build/.docker-$(VERSION)-quorum
+	
+build/.docker-$(VERSION)-crux: build/qbc-$(VERSION)-linux-386.tar.gz build/qbc-$(VERSION)-darwin-64.tar.gz
 	docker build -f docker/crux.Dockerfile -t consensys/crux:$(VERSION) .
 	docker tag consensys/crux:$(VERSION) consensys/crux:latest
-	docker tag consensys/quorum:$(VERSION) consensys/quorum:latest
+	touch build/.docker-$(VERSION)-crux
+	
+build/.docker-$(VERSION)-tessera: build/qbc-$(VERSION)-linux-386.tar.gz build/qbc-$(VERSION)-darwin-64.tar.gz
+	docker build -f docker/tessera.Dockerfile -t consensys/tessera:$(VERSION) .
 	docker tag consensys/tessera:$(VERSION) consensys/tessera:latest
+	touch build/.docker-$(VERSION)-tessera
+	
+build/.docker-$(VERSION): build/.docker-$(VERSION)-quorum build/.docker-$(VERSION)-tessera build/.docker-$(VERSION)-crux
 	touch build/.docker-$(VERSION)
 	
-build/.dockerpush-$(VERSION): build/.docker-$(VERSION)
+build/.dockerpush-$(VERSION): build/.docker-$(VERSION)-tessera build/.docker-$(VERSION)-quorum build/.docker-$(VERSION)-crux
 	docker login -u $(BINTRAY_USER) -p $(BINTRAY_KEY) consensys-docker-qbc.bintray.io
 	docker tag consensys/quorum:$(VERSION) consensys-docker-qbc.bintray.io/consensys/quorum:$(VERSION)
 	docker push consensys-docker-qbc.bintray.io/consensys/quorum:$(VERSION)

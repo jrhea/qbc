@@ -6,7 +6,8 @@ COPY build/tessera*.tar.gz /tmp/tessera.tar.gz
 
 RUN cd /opt && \
   tar xzf /tmp/tessera.tar.gz && \
-  rm /tmp/tessera.tar.gz
+  rm /tmp/tessera.tar.gz && \
+  mv *.jar tessera-app.jar
   
 COPY docker/tessera-start.sh /opt/tessera-start.sh
 

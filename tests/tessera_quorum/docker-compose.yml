@@ -7,12 +7,9 @@ services:
     ports:
       - 9001:9000
     restart: always
-    networks:
-      quorum_net:
-        ipv4_address: 10.5.0.21
     environment:
-      - HOSTNAME=tessera1
-      - OTHER_NODES=http://tessera2:9000/
+      - URL=http://127.0.0.1:9001
+      - OTHER_NODES=http://127.0.0.1:9002/
     volumes:
       - ${WORKDIR}/c1:/var/cdata/
       - ${WORKDIR}/q1:/var/qdata/
@@ -22,12 +19,9 @@ services:
     container_name: tessera2
     ports:
       - 9002:9000
-    networks:
-      quorum_net:
-        ipv4_address: 10.5.0.22
     environment:
-      - HOSTNAME=tessera2
-      - OTHER_NODES=http://tessera3:9000/
+      - URL=http://127.0.0.1:9002
+      - OTHER_NODES=http://127.0.0.1:9003/
     volumes:
       - ${WORKDIR}/c2:/var/cdata/
       - ${WORKDIR}/q2:/var/qdata/
@@ -37,12 +31,9 @@ services:
     container_name: tessera3
     ports:
       - 9003:9000
-    networks:
-      quorum_net:
-        ipv4_address: 10.5.0.23
     environment:
-      - HOSTNAME=tessera3
-      - OTHER_NODES=http://tessera4:9000/
+      - URL=http://127.0.0.1:9003
+      - OTHER_NODES=http://127.0.0.1:9004
     volumes:
       - ${WORKDIR}/c3:/var/cdata/
       - ${WORKDIR}/q3:/var/qdata/
@@ -52,12 +43,9 @@ services:
     container_name: tessera4
     ports:
       - 9004:9000
-    networks:
-      quorum_net:
-        ipv4_address: 10.5.0.24
     environment:
-      - HOSTNAME=tessera4
-      - OTHER_NODES=http://tessera1:9000/
+      - URL=http://127.0.0.1:9004
+      - OTHER_NODES=http://127.0.0.1:9001
     volumes:
       - ${WORKDIR}/c4:/var/cdata/
       - ${WORKDIR}/q4:/var/qdata/
@@ -69,9 +57,6 @@ services:
       - 22001:22000
       - 21001:21000
     restart: always
-    networks:
-      quorum_net:
-        ipv4_address: 10.5.0.11
     volumes:
       - ./contract:/var/contract
       - ${WORKDIR}/q1:/var/qdata/
@@ -82,9 +67,6 @@ services:
     ports:
       - 22002:22000
       - 21002:21000
-    networks:
-      quorum_net:
-        ipv4_address: 10.5.0.12
     volumes:
       - ./contract:/var/contract
       - ${WORKDIR}/q2:/var/qdata/
@@ -95,9 +77,6 @@ services:
     ports:
       - 22003:22000
       - 21003:21000
-    networks:
-      quorum_net:
-        ipv4_address: 10.5.0.13
     volumes:
       - ./contract:/var/contract
       - ${WORKDIR}/q3:/var/qdata/
@@ -108,17 +87,6 @@ services:
     ports:
       - 22004:22000
       - 21004:21000
-    networks:
-      quorum_net:
-        ipv4_address: 10.5.0.14
     volumes:
       - ./contract:/var/contract
       - ${WORKDIR}/q4:/var/qdata/
-
-networks:
-  quorum_net:
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: 10.5.0.0/24

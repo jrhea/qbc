@@ -59,7 +59,7 @@ $(eval WORKDIR = $(shell cat .workdir))
 	touch .start
 	
 .check_up: .start
-	curl --connect-timeout 5 --max-time 10 --retry 5 --retry-delay 0 --retry-max-time 40 -sL "http://localhost:9001/upcheck" -o /dev/null
+	curl -vv -X POST "http://0.0.0.0:9011/upcheck"
 	touch .check_up
 
 test: .check_up

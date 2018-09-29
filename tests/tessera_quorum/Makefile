@@ -52,6 +52,11 @@ $(eval WORKDIR = $(shell cat .workdir))
 	
 	echo "oNspPPgszVUFw0qmGFfWwh1uxVUXgvBxleXORHj07g8=" >> $(WORKDIR)/c4/tm.pub
 	echo '{"data":{"bytes":"grQjd3dBp4qFs8/5Jdq7xjz++aUx/LXAqISFyPWaCRw="},"type":"unlocked"}' >> $(WORKDIR)/c4/tm.key
+	
+	cp tessera-config.json $(WORKDIR)/c1/
+	cp tessera-config.json $(WORKDIR)/c2/
+	cp tessera-config.json $(WORKDIR)/c3/
+	cp tessera-config.json $(WORKDIR)/c4/
 	echo $(WORKDIR) > .workdir
 
 .start: .workdir

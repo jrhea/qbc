@@ -8,9 +8,6 @@ services:
       - 9001:9000
       - 9011:9001
     restart: always
-    networks:
-      quorum_net:
-        ipv4_address: 10.5.0.21
     environment:
       - HOSTNAME=crux1
       - OTHER_NODES=http://crux2:9000/
@@ -24,9 +21,6 @@ services:
     ports:
       - 9002:9000
       - 9012:9001
-    networks:
-      quorum_net:
-        ipv4_address: 10.5.0.22
     environment:
       - HOSTNAME=crux2
       - OTHER_NODES=http://crux3:9000/
@@ -40,9 +34,6 @@ services:
     ports:
       - 9003:9000
       - 9013:9001
-    networks:
-      quorum_net:
-        ipv4_address: 10.5.0.23
     environment:
       - HOSTNAME=crux3
       - OTHER_NODES=http://crux4:9000/
@@ -56,9 +47,6 @@ services:
     ports:
       - 9004:9000
       - 9014:9001
-    networks:
-      quorum_net:
-        ipv4_address: 10.5.0.24
     environment:
       - HOSTNAME=crux4
       - OTHER_NODES=http://crux1:9000/
@@ -73,9 +61,6 @@ services:
       - 22001:22000
       - 21001:21000
     restart: always
-    networks:
-      quorum_net:
-        ipv4_address: 10.5.0.11
     volumes:
       - ./contract:/var/contract
       - ${WORKDIR}/q1:/var/qdata/
@@ -86,9 +71,6 @@ services:
     ports:
       - 22002:22000
       - 21002:21000
-    networks:
-      quorum_net:
-        ipv4_address: 10.5.0.12
     volumes:
       - ./contract:/var/contract
       - ${WORKDIR}/q2:/var/qdata/
@@ -99,9 +81,6 @@ services:
     ports:
       - 22003:22000
       - 21003:21000
-    networks:
-      quorum_net:
-        ipv4_address: 10.5.0.13
     volumes:
       - ./contract:/var/contract
       - ${WORKDIR}/q3:/var/qdata/
@@ -112,17 +91,6 @@ services:
     ports:
       - 22004:22000
       - 21004:21000
-    networks:
-      quorum_net:
-        ipv4_address: 10.5.0.14
     volumes:
       - ./contract:/var/contract
       - ${WORKDIR}/q4:/var/qdata/
-
-networks:
-  quorum_net:
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: 10.5.0.0/24

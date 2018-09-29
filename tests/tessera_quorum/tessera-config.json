@@ -1,0 +1,11 @@
+{
+  "server": {
+    "influxConfig": {
+      "hostName": "example.com",
+      "port": "10000",
+      "pushIntervalInSecs": 525600,
+      "dbName": "example"
+    }
+  },
+  "alwaysSendTo": []
+}
