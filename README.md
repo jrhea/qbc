@@ -6,7 +6,7 @@ Distribution of Quorum and associated projects, tested and supported by ConsenSy
 
 You can download binaries created with this project under:
    https://consensys.bintray.com/binaries/qbc/0.1/
-   
+
 # Docker images
 
 You can pull Docker images for Quorum, Crux and Tessera:
@@ -18,6 +18,18 @@ docker pull consensys-docker-qbc.bintray.io/qbc/tessera:0.1
 
 # Development
 
+## Docker
+
+Install:
+```
+  $> curl -fsSL get.docker.com -o get-docker.sh
+  $> sh get-docker.sh
+```
+
+Config:
+> Add /var/folders to Preferences > File Sharing
+
+
 ## Binaries
 
 On a Mac machine, install required binaries for all projects:
@@ -28,12 +40,12 @@ On a Mac machine, install required binaries for all projects:
 
 To build the tarball package for Linux, run:
 ```
-$> make build/qbc-$(VERSION)-linux-386.tar.gz
+$> make build/qbc-$(VERSION)-linux-386.tar.gz -j8
 ```
 
 To build the tarball package for Mac OS X, run:
 ```
-$> make build/qbc-$(VERSION)-darwin-64.tar.gz
+$> make build/qbc-$(VERSION)-darwin-64.tar.gz -j8
 ```
 
 To create the Docker images, you can run:
