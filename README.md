@@ -22,7 +22,7 @@ docker pull consensys-docker-qbc.bintray.io/qbc/tessera:0.1
 
 On a Mac machine, install required binaries for all projects:
 
-`$> brew install berkeley-db libsodium-dev build-essential`
+`$> brew install berkeley-db libsodium maven`
 
 # Building
 
@@ -38,7 +38,7 @@ $> make build/qbc-$(VERSION)-darwin-64.tar.gz
 
 To create the Docker images, you can run:
 ```
-$> make
+$> make -j8
 ```
 
 # Testing
