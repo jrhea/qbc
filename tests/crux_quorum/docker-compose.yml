@@ -1,12 +1,12 @@
 version: "3.4"
 services:
-  
+
   crux1: &crux_node
     image: consensys/crux:latest
     container_name: crux1
     ports:
-      - 9001:9000
-      - 9011:9001
+      - 19001:9000
+      - 19011:9001
     restart: always
     environment:
       - HOSTNAME=crux1
@@ -14,13 +14,13 @@ services:
     volumes:
       - ${WORKDIR}/c1:/var/cdata/
       - ${WORKDIR}/q1:/var/qdata/
-      
+
   crux2:
     <<: *crux_node
     container_name: crux2
     ports:
-      - 9002:9000
-      - 9012:9001
+      - 19002:9000
+      - 19012:9001
     environment:
       - HOSTNAME=crux2
       - OTHER_NODES=http://crux3:9000/
@@ -32,28 +32,28 @@ services:
     <<: *crux_node
     container_name: crux3
     ports:
-      - 9003:9000
-      - 9013:9001
+      - 19003:9000
+      - 19013:9001
     environment:
       - HOSTNAME=crux3
       - OTHER_NODES=http://crux4:9000/
     volumes:
       - ${WORKDIR}/c3:/var/cdata/
       - ${WORKDIR}/q3:/var/qdata/
-    
+
   crux4:
     <<: *crux_node
     container_name: crux4
     ports:
-      - 9004:9000
-      - 9014:9001
+      - 19004:9000
+      - 19014:9001
     environment:
       - HOSTNAME=crux4
       - OTHER_NODES=http://crux1:9000/
     volumes:
       - ${WORKDIR}/c4:/var/cdata/
       - ${WORKDIR}/q4:/var/qdata/
-      
+
   node1: &quorum_crux_node
     image: consensys/quorum:latest
     container_name: quorum1
@@ -74,7 +74,7 @@ services:
     volumes:
       - ./contract:/var/contract
       - ${WORKDIR}/q2:/var/qdata/
- 
+
   node3:
     <<: *quorum_crux_node
     container_name: quorum3

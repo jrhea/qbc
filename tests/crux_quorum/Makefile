@@ -59,8 +59,15 @@ $(eval WORKDIR = $(shell cat .workdir))
 	touch .start
 
 .check_up: .start
-	curl -vv -X POST "http://0.0.0.0:9001/upcheck"
-	touch .check_up
+	$(eval OK = 200)
+	$(eval HTTP_STATUS = $(shell curl -s -o /dev/null -w "%{http_code}" -X POST "http://localhost:19011/upcheck"))
+	@if [ "$(HTTP_STATUS)" -eq "$(OK)" ]; then \
+		echo "upcheck succeeded with HTTP_STATUS: $(HTTP_STATUS)"; \
+		touch .check_up; \
+	else \
+		echo "upcheck failed with HTTP_STATUS: $(HTTP_STATUS)" 1>&2; \
+		exit 1; \
+	fi
 
 test: .check_up
 	docker exec -it quorum2 bash -c "cd /var/contract && ./test_transaction.sh"
