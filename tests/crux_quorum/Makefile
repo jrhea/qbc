@@ -9,10 +9,10 @@ $(eval WORKDIR = $(shell cat .workdir))
 	$(eval WORKDIR = $(shell mktemp -t crux_quorum -d))
 	mkdir -p $(WORKDIR)/q1/logs
 	mkdir -p $(WORKDIR)/q1/dd/{keystore,geth}
-	echo ["enode://5c3c98e3a28a87e73ab40468212de7ab6cf0e2afa77781295925f32369c00baf30f664e52f8d152c02b069d6daa1a61f477e3c1eca64403529dfbd0c31e09524@10.5.0.11:21000?discport=0",\
-	      "enode://9b98a96a8ba080ff4c7863e5fdf3211a7082b612d5897ae4eed687eec391eb421c8ed7c572ca17f257441a0cb544a7c184244dfdf9a114f5251da3dac72e7585@10.5.0.12:21000?discport=0",\
-				"enode://a51690b44ab39fd83c42b5a7c087ba222970951f06655ebbba1625267fad105fd238c9f092e05b2293f526e748b2fa423b22d66296f770037393c26a9e5d3543@10.5.0.13:21000?discport=0",\
-				"enode://a68df7cd75e9ea490653bdba7c6868f979944578e59c9efd2aa62878822f16f46a49a13289f6392923053be1acb3a6ec8e2fc92cae59de859fd5892071fbfa88@10.5.0.14:21000?discport=0"]\
+	echo '["enode://5c3c98e3a28a87e73ab40468212de7ab6cf0e2afa77781295925f32369c00baf30f664e52f8d152c02b069d6daa1a61f477e3c1eca64403529dfbd0c31e09524@10.5.0.15:21000?discport=0",\
+	      "enode://9b98a96a8ba080ff4c7863e5fdf3211a7082b612d5897ae4eed687eec391eb421c8ed7c572ca17f257441a0cb544a7c184244dfdf9a114f5251da3dac72e7585@10.5.0.16:21000?discport=0",\
+				"enode://a51690b44ab39fd83c42b5a7c087ba222970951f06655ebbba1625267fad105fd238c9f092e05b2293f526e748b2fa423b22d66296f770037393c26a9e5d3543@10.5.0.17:21000?discport=0",\
+				"enode://a68df7cd75e9ea490653bdba7c6868f979944578e59c9efd2aa62878822f16f46a49a13289f6392923053be1acb3a6ec8e2fc92cae59de859fd5892071fbfa88@10.5.0.18:21000?discport=0"]'\
 				 >> $(WORKDIR)/q1/dd/static-nodes.json
 	cp $(WORKDIR)/q1/dd/static-nodes.json $(WORKDIR)/q1/dd/permissioned-nodes.json
 	touch $(WORKDIR)/q1/passwords.txt
@@ -60,7 +60,7 @@ $(eval WORKDIR = $(shell cat .workdir))
 
 .check_up: .start
 	$(eval OK = 200)
-	$(eval HTTP_STATUS = $(shell curl -s -o /dev/null -w "%{http_code}" -X POST "http://localhost:19011/upcheck"))
+	$(eval HTTP_STATUS = $(shell curl -s -o /dev/null -w "%{http_code}" -X POST "http://localhost:19012/upcheck"))
 	@if [ "$(HTTP_STATUS)" -eq "$(OK)" ]; then \
 		echo "upcheck succeeded with HTTP_STATUS: $(HTTP_STATUS)"; \
 		touch .check_up; \
@@ -74,8 +74,8 @@ test: .check_up
 
 stop:
 	docker-compose down
-	rm .start
+	rm -f .start
 
 clean:
 	rm -Rf $(TMPDIR)crux_quorum.*
-	rm .workdir
+	rm -f .workdir
