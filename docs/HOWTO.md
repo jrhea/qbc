@@ -95,7 +95,7 @@ You can then start Crux with:
 You can start Quorum with:
 
 `docker run -p 22000:22000 -p 21000:21000 -v <path to quorum data>:/var/qdata/ consensys/quorum:latest`
-  
+
 You can also use a docker compose yaml configuration file to run both containers together:
 
 ```
@@ -121,7 +121,7 @@ services:
       - 21000:21000
     restart: always
     volumes:
-      - ${WORKDIR}/q1:/var/qdata/      
+      - ${WORKDIR}/q1:/var/qdata/
 
 ```
 
@@ -129,11 +129,32 @@ services:
 
 On the node, perform the following to check Constellation is up and running:
 
-`curl -vv http://localhost:9000/upcheck`
+`curl -vv http://localhost:19001/upcheck`
 
 Check the quorum logs to check the node came up without issues.
 
 `less <path to quorum data>/logs/node.log`
-  
 
-  
+## Troubleshooting
+
+Open a shell to a container:
+
+```
+docker exec -it <container_name> /bin/bash
+```
+
+Node Info
+```
+curl -X POST --data '{"jsonrpc":"2.0","method":"admin_nodeInfo","id":1}' 0.0.0.0:22001
+```
+
+Get list of connected peers
+```
+curl -X POST --data '{"jsonrpc":"2.0","method":"admin_peers","id":1}' 0.0.0.0:22001
+```
+
+Get blocknumber
+```
+curl -X POST --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' 0.0.0.0:22001
+```
+
