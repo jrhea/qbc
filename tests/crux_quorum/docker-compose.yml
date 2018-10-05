@@ -8,6 +8,9 @@ services:
       - 19001:9000
       - 19011:9001
     restart: always
+    networks:
+      quorum_net:
+        ipv4_address: 10.5.0.11
     environment:
       - HOSTNAME=crux1
       - OTHER_NODES=http://crux2:9000/
@@ -21,6 +24,9 @@ services:
     ports:
       - 19002:9000
       - 19012:9001
+    networks:
+      quorum_net:
+        ipv4_address: 10.5.0.12
     environment:
       - HOSTNAME=crux2
       - OTHER_NODES=http://crux3:9000/
@@ -34,6 +40,9 @@ services:
     ports:
       - 19003:9000
       - 19013:9001
+    networks:
+      quorum_net:
+        ipv4_address: 10.5.0.13
     environment:
       - HOSTNAME=crux3
       - OTHER_NODES=http://crux4:9000/
@@ -47,6 +56,9 @@ services:
     ports:
       - 19004:9000
       - 19014:9001
+    networks:
+      quorum_net:
+        ipv4_address: 10.5.0.14
     environment:
       - HOSTNAME=crux4
       - OTHER_NODES=http://crux1:9000/
@@ -61,6 +73,11 @@ services:
       - 22001:22000
       - 21001:21000
     restart: always
+    depends_on:
+      - crux1
+    networks:
+      quorum_net:
+        ipv4_address: 10.5.0.15
     volumes:
       - ./contract:/var/contract
       - ${WORKDIR}/q1:/var/qdata/
@@ -71,6 +88,11 @@ services:
     ports:
       - 22002:22000
       - 21002:21000
+    depends_on:
+      - crux2
+    networks:
+      quorum_net:
+        ipv4_address: 10.5.0.16
     volumes:
       - ./contract:/var/contract
       - ${WORKDIR}/q2:/var/qdata/
@@ -81,6 +103,11 @@ services:
     ports:
       - 22003:22000
       - 21003:21000
+    depends_on:
+      - crux3
+    networks:
+      quorum_net:
+        ipv4_address: 10.5.0.17
     volumes:
       - ./contract:/var/contract
       - ${WORKDIR}/q3:/var/qdata/
@@ -91,6 +118,19 @@ services:
     ports:
       - 22004:22000
       - 21004:21000
+    depends_on:
+      - crux4
+    networks:
+      quorum_net:
+        ipv4_address: 10.5.0.18
     volumes:
       - ./contract:/var/contract
       - ${WORKDIR}/q4:/var/qdata/
+
+networks:
+  quorum_net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 10.5.0.0/24
