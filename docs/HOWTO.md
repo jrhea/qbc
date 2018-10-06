@@ -2,9 +2,52 @@
 
 ## Set up the Quorum node network
 
-### Generate a key pair for each node
+### Generate Enode and nodekey
 
-TODO
+Each node in the network is identified by a unique id assigned to it called the enode.  This enode is the public key corresponding to a private nodekey.
+
+
+Generate public enode from the private nodekey:
+
+```
+nodekey=`docker run -v <PATH TO DATA FOLDER>:/var/qdata/ consensys/quorum:latest sh -c "/opt/bootnode -genkey /var/qdata/dd/nodekey -writeaddress;cat /var/qdata/dd/nodekey"`;
+enode=`docker run -v <PATH TO DATA FOLDER>:/var/qdata/ consensys/quorum:latest sh -c "/opt/bootnode -nodekeyhex $nodekey -writeaddress"`;
+```
+
+Only nodes who's enodes are listed in the static-nodes.json file can participate in the consensus mechanism.
+
+Here is an example of how to generate a static-nodes.json file:
+
+```
+ips=("10.5.0.15" "10.5.0.16" "10.5.0.17" "10.5.0.18")
+i=1
+mkdir -p $WORKDIR/q1/dd/
+echo "[" > $WORKDIR/q1/dd/static-nodes.json;
+for ip in ${ips[*]}; do
+    mkdir -p $WORKDIR/q${i}/logs;
+    mkdir -p $WORKDIR/q${i}/dd/{keystore,geth};
+    enode=`docker run -v $WORKDIR/q${i}:/var/qdata/ consensys/quorum:latest sh -c "/opt/bootnode -genkey /var/qdata/dd/nodekey -writeaddress; cat /var/qdata/dd/nodekey"`;
+    enode=`docker run -v $WORKDIR/q${i}:/var/qdata/ consensys/quorum:latest sh -c "/opt/bootnode -nodekeyhex $enode -writeaddress"`;
+    sep=`[[ $i < ${#ips[@]} ]] && echo ","`;
+    echo '  "enode://'$enode'@'$ip':21000?discport=0"'$sep >> $WORKDIR/q1/dd/static-nodes.json;
+    let i++;
+done
+echo "]" >> $WORKDIR/q1/dd/static-nodes.json
+
+```
+
+The output should look something like this:
+
+```
+$ cat $WORKDIR/q1/dd/static-nodes.json
+[
+  "enode://07f75277b1bb17329d91dde84d2e4d2d01d67b50a8e6974fbc19602edd3a832b@10.5.0.15:21000?discport=0",
+  "enode://48ef4d4bdcb04db9bb0095dde90ed49abb4be995b6c673e8e2715e3c0cb34614@10.5.0.16:21000?discport=0",
+  "enode://bf94844598cbfe955952076ba046ed143fec160968eed12d3fa93256c6e7a8b0@10.5.0.17:21000?discport=0",
+  "enode://14d2b9dc41c34638bf736cd84d43b30e733d94a98e60190ee760c6b73548c26c@10.5.0.18:21000?discport=0"
+]
+
+```
 
 Passwords file
 
