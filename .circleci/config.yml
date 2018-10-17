@@ -4,6 +4,7 @@ jobs:
     macos:
       xcode: "10.0.0"
     steps:
+      - run: brew install go
       - checkout
       - run: make circleci-macos
 
