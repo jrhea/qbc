@@ -56,6 +56,7 @@ $(eval WORKDIR = $(shell cat .workdir))
 
 .start: .workdir
 	env WORKDIR=$(WORKDIR) docker-compose up -d
+	bash waitForStart.sh
 	touch .start
 
 .check_up: .start
@@ -70,7 +71,7 @@ $(eval WORKDIR = $(shell cat .workdir))
 	fi
 
 test: .check_up
-	docker exec -it quorum2 bash -c "cd /var/contract && ./test_transaction.sh"
+	bash runTests.sh
 
 stop:
 	docker-compose down
