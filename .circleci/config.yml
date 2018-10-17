@@ -4,7 +4,7 @@ jobs:
     macos:
       xcode: "10.0.0"
     steps:
-      - run: brew install go
+      - run: brew install go berkeley-db
       - checkout
       - run: make circleci-macos
 
