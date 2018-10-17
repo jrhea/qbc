@@ -1,33 +1,19 @@
 VERSION=0.3
-TESSERA_VERSION=0.6.1-qbc
 QUORUM_VERSION=v2.1.1-grpc
 CRUX_VERSION=master
 GOOS=darwin
-GOARCH=386
+GOARCH=64
 BINTRAY_USER=jdoe
 BINTRAY_KEY=pass
 
 .PHONY: clean release check_bintray tag test
 .DEFAULT_GOAL := build/.docker-$(VERSION)
 
-build/qbc-$(VERSION)-linux-386.tar.gz: build/tessera-$(TESSERA_VERSION).tar.gz build/quorum-$(QUORUM_VERSION)-linux-386.tar.gz build/crux-$(CRUX_VERSION)-linux-386.tar.gz
-	cd build && tar czf qbc-$(VERSION)-linux-386.tar.gz tessera-$(TESSERA_VERSION).tar.gz quorum-$(QUORUM_VERSION)-linux-386.tar.gz crux-$(CRUX_VERSION)-linux-386.tar.gz
+build/qbc-$(VERSION)-linux-386.tar.gz: build/quorum-$(QUORUM_VERSION)-linux-386.tar.gz build/crux-$(CRUX_VERSION)-linux-386.tar.gz
+	cd build && tar czf qbc-$(VERSION)-linux-386.tar.gz quorum-$(QUORUM_VERSION)-linux-386.tar.gz crux-$(CRUX_VERSION)-linux-386.tar.gz
 
-build/qbc-$(VERSION)-darwin-64.tar.gz: build/tessera-$(TESSERA_VERSION).tar.gz build/quorum-$(QUORUM_VERSION)-darwin-64.tar.gz build/crux-$(CRUX_VERSION)-darwin-64.tar.gz
-	cd build && tar czf qbc-$(VERSION)-darwin-64.tar.gz tessera-$(TESSERA_VERSION).tar.gz quorum-$(QUORUM_VERSION)-darwin-64.tar.gz crux-$(CRUX_VERSION)-darwin-64.tar.gz
-
-tessera-$(TESSERA_VERSION):
-	git clone --branch $(TESSERA_VERSION) --depth 1 https://github.com/consensys/tessera.git tessera-$(TESSERA_VERSION)
-
-tessera-$(TESSERA_VERSION)/tessera-app/target/tessera-app-$(TESSERA_VERSION)-app.jar: tessera-$(TESSERA_VERSION)
-	cd tessera-$(TESSERA_VERSION) && mvn package
-	cd tessera-$(TESSERA_VERSION)/tessera-app/target/ && mv tessera-app-*-app.jar tessera-app-$(TESSERA_VERSION)-app.jar
-
-build/tessera-$(TESSERA_VERSION).tar.gz: tessera-$(TESSERA_VERSION)/tessera-app/target/tessera-app-$(TESSERA_VERSION)-app.jar
-	mkdir -p build
-	tar cf build/tessera-$(TESSERA_VERSION).tar -C docs/tessera .
-	tar rf build/tessera-$(TESSERA_VERSION).tar -C tessera-$(TESSERA_VERSION)/tessera-app/target tessera-app-$(TESSERA_VERSION)-app.jar
-	gzip build/tessera-$(TESSERA_VERSION).tar
+build/qbc-$(VERSION)-darwin-64.tar.gz: build/quorum-$(QUORUM_VERSION)-darwin-64.tar.gz build/crux-$(CRUX_VERSION)-darwin-64.tar.gz
+	cd build && tar czf qbc-$(VERSION)-darwin-64.tar.gz quorum-$(QUORUM_VERSION)-darwin-64.tar.gz crux-$(CRUX_VERSION)-darwin-64.tar.gz
 
 quorum-$(QUORUM_VERSION)-darwin-64:
 	git clone --branch $(QUORUM_VERSION) --depth 1 https://github.com/ConsenSys/quorum.git quorum-$(QUORUM_VERSION)-darwin-64
@@ -91,28 +77,20 @@ build/.docker-$(VERSION)-crux: build/qbc-$(VERSION)-linux-386.tar.gz build/qbc-$
 	docker tag consensys/crux:$(VERSION) consensys/crux:latest
 	touch build/.docker-$(VERSION)-crux
 
-build/.docker-$(VERSION)-tessera: build/qbc-$(VERSION)-linux-386.tar.gz build/qbc-$(VERSION)-darwin-64.tar.gz
-	docker build -f docker/tessera.Dockerfile -t consensys/tessera:$(VERSION) .
-	docker tag consensys/tessera:$(VERSION) consensys/tessera:latest
-	touch build/.docker-$(VERSION)-tessera
-
-build/.docker-$(VERSION): build/.docker-$(VERSION)-quorum build/.docker-$(VERSION)-tessera build/.docker-$(VERSION)-crux
+build/.docker-$(VERSION): build/.docker-$(VERSION)-quorum build/.docker-$(VERSION)-crux
 	touch build/.docker-$(VERSION)
 
-build/.dockerpush-$(VERSION): build/.docker-$(VERSION)-tessera build/.docker-$(VERSION)-quorum build/.docker-$(VERSION)-crux
+build/.dockerpush-$(VERSION): build/.docker-$(VERSION)-quorum build/.docker-$(VERSION)-crux
 	docker login -u $(BINTRAY_USER) -p $(BINTRAY_KEY) consensys-docker-qbc.bintray.io
 	docker tag consensys/quorum:$(VERSION) consensys-docker-qbc.bintray.io/consensys/quorum:$(VERSION)
 	docker push consensys-docker-qbc.bintray.io/consensys/quorum:$(VERSION)
 	docker tag consensys/crux:$(VERSION) consensys-docker-qbc.bintray.io/consensys/crux:$(VERSION)
 	docker push consensys-docker-qbc.bintray.io/consensys/crux:$(VERSION)
-	docker tag consensys/tessera:$(VERSION) consensys-docker-qbc.bintray.io/consensys/tessera:$(VERSION)
-	docker push consensys-docker-qbc.bintray.io/consensys/tessera:$(VERSION)
 	touch build/.dockerpush-$(VERSION)
 
 clean:
 	rm -Rf crux-*
 	rm -Rf quorum-*
-	rm -Rf tessera-*
 	rm -Rf build
 
 build/qbc-$(VERSION)-linux-386.tar.gz.asc: build/qbc-$(VERSION)-linux-386.tar.gz
