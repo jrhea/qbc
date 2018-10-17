@@ -5,5 +5,5 @@ jobs:
       xcode: "10.0.0"
     steps:
       - checkout
-      - run: make
+      - run: make circleci-macos
 

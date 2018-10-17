@@ -6,7 +6,7 @@ GOARCH=64
 BINTRAY_USER=jdoe
 BINTRAY_KEY=pass
 
-.PHONY: clean release check_bintray tag test
+.PHONY: clean release tag circleci-macos
 .DEFAULT_GOAL := build/.docker-$(VERSION)
 
 build/qbc-$(VERSION)-linux-386.tar.gz: build/quorum-$(QUORUM_VERSION)-linux-386.tar.gz build/crux-$(CRUX_VERSION)-linux-386.tar.gz
@@ -112,5 +112,5 @@ tag:
 release: tag build/.dockerpush-$(VERSION) build/.tgzpush-$(VERSION)
 	git push origin master --tags
 
-test: build/.docker-$(VERSION)
-	$(error TODO)
+circleci-macos: build/qbc-$(VERSION)-darwin-64.tar.gz
+	
