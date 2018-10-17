@@ -60,7 +60,7 @@ An example of genesis JSON file is in this repository under `tests/crux_quorum/i
 The JSON file is ingested by the geth init command to initialize the first block.
 
 `docker run -it -v <PATH TO DATA FOLDER>:/var/qdata/ -v <PATH TO JSON FILE>:/tmp/genesis.json \
-	  consensys/quorum:latest /opt/geth --datadir /var/qdata/dd init /tmp/genesis.json`
+    consensys/quorum:latest /opt/geth --datadir /var/qdata/dd init /tmp/genesis.json`
 
 ### Create a list of static and permissioned nodes
 
@@ -90,12 +90,12 @@ Copy the files created earlier so it conforms to the structure below:
 
 ```
 ├── dd
-│   ├── keystore
-│   │   └── key
-│   ├── permissioned-nodes.json
-│   └── static-nodes.json
+│   ├── keystore
+│   │   └── key
+│   ├── permissioned-nodes.json
+│   └── static-nodes.json
 ├── logs
-│   └── node.log
+│   └── node.log
 ├── nodekey
 └── passwords.txt
 ```
@@ -118,7 +118,7 @@ Copy the files created earlier so it conforms to the structure below. Make sure 
 
 ```
 ├── logs
-│   └── crux.log
+│   └── crux.log
 ├── tm.key
 └── tm.pub
 ```
@@ -178,6 +178,42 @@ Check the quorum logs to check the node came up without issues.
 
 `less <path to quorum data>/logs/node.log`
 
+## Private Transactions
+
+Example of how to send a private transaction:
+
+***Send Private Transaction***
+```
+$ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_sendTransaction","params":[{"from": "0xed9d02e382b34818e88b88a309c7fe71e65f419d", "to": "0xca843569e3427144cead5e4d5999a3d0ccf92b8e", "gas": "0x76c0", "data": "0xca843569e3427144cead5e4d5999a3d0ccf92b8eed9d02e382b34818e88b88a309c7fe71e65f419d", "privateFor": ["QfeDAys9MPDs2XHExtc84jKGHxZg/aj52DTh0vtA3Xc="]}],"id":1}' 0.0.0.0:22001
+
+{"jsonrpc":"2.0","id":1,"result":"0xdcbe81138963dc32993ec0a83f6d974e1e3c0ec27fc88f09bfe8c7b54ab51de1"}
+```
+Copy `0xdcbe81138963dc32993ec0a83f6d974e1e3c0ec27fc88f09bfe8c7b54ab51de1` from the  result field for the next step
+
+***Get Transaction Input***
+```
+$ curl -X POST --data '{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["0xdcbe81138963dc32993ec0a83f6d974e1e3c0ec27fc88f09bfe8c7b54ab51de1"],"id":1}' 0.0.0.0:22001
+{"jsonrpc":"2.0","id":1,"result":{"blockHash":"0xe98fc1b2110f60407e9bfefddadf16e5b210b9e12dd0e78b4fe277552078c353","blockNumber":"0x58","from":"0xed9d02e382b34818e88b88a309c7fe71e65f419d","gas":"0x76c0","gasPrice":"0x0","hash":"0xdcbe81138963dc32993ec0a83f6d974e1e3c0ec27fc88f09bfe8c7b54ab51de1","input":"0x7e5b0b4effedf9a3d8c393e2e669a73296066032a0c779d28d5b35234be5da2d529a096efadc8944cc4dfd9bae4ed1efe75c7f7b431584a35dc38c942177884e","nonce":"0x0","to":"0xca843569e3427144cead5e4d5999a3d0ccf92b8e","transactionIndex":"0x0","value":"0x0","v":"0x25","r":"0x174ba76866bea2d7520e004e3f9b573ca058e219347880fc86ab70b4a708a4dc","s":"0x30eba5e128884ce1f5a659b8e978d62d9d438173d2f3cc11c0020f7cdd6a48a5"}}
+```
+
+Copy `0x7e5b0b4effedf9a3d8c393e2e669a73296066032a0c779d28d5b35234be5da2d529a096efadc8944cc4dfd9bae4ed1efe75c7f7b431584a35dc38c942177884e` from the input field for the next step
+
+***Get Payload from Sending node***
+```
+$ curl -X POST --data '{"jsonrpc":"2.0", "method":"eth_getQuorumPayload", "params":["0x7e5b0b4effedf9a3d8c393e2e669a73296066032a0c779d28d5b35234be5da2d529a096efadc8944cc4dfd9bae4ed1efe75c7f7b431584a35dc38c942177884e"], "id":2}' 0.0.0.0:22001
+
+{"jsonrpc":"2.0","id":2,"result":"0xca843569e3427144cead5e4d5999a3d0ccf92b8eed9d02e382b34818e88b88a309c7fe71e65f419d"}
+```
+
+***Get Payload from Receiving node***
+```
+$ curl -X POST --data '{"jsonrpc":"2.0", "method":"eth_getQuorumPayload", "params":["0x7e5b0b4effedf9a3d8c393e2e669a73296066032a0c779d28d5b35234be5da2d529a096efadc8944cc4dfd9bae4ed1efe75c7f7b431584a35dc38c942177884e"], "id":2}' 0.0.0.0:22001
+
+{"jsonrpc":"2.0","id":2,"result":"0xca843569e3427144cead5e4d5999a3d0ccf92b8eed9d02e382b34818e88b88a309c7fe71e65f419d"}
+```
+For all other nodes, 0x should be the result:
+> 0x means that the privateFor public key doesn't match any nodes in the network
+
 ## Troubleshooting
 
 Open a shell to a container:
@@ -200,4 +236,3 @@ Get blocknumber
 ```
 curl -X POST --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' 0.0.0.0:22001
 ```
-
