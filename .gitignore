@@ -1,4 +1,4 @@
-/tessera-*
+/constellation-*
 /quorum-*
 build
 /crux-*
@@ -6,6 +6,6 @@ build
 tests/crux_quorum/.start
 tests/crux_quorum/.workdir
 tests/crux_quorum/.check_up
-tests/tessera_quorum/.start
-tests/tessera_quorum/.workdir
-tests/tessera_quorum/.check_up
+tests/constellation_quorum/.start
+tests/constellation_quorum/.workdir
+tests/constellation_quorum/.check_up
