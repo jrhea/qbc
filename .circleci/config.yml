@@ -4,7 +4,7 @@ jobs:
     macos:
       xcode: "10.0.0"
     steps:
-      - run: brew install go berkeley-db
+      - run: brew install go berkeley-db leveldb libsodium maven haskell-stack && stack setup
       - checkout
       - run: make circleci-macos
 

@@ -34,7 +34,11 @@ Config:
 
 On a Mac machine, install required binaries for all projects:
 
-`$> brew install berkeley-db libsodium maven`
+`$> brew install berkeley-db leveldb libsodium maven haskell-stack`
+
+Install the Glasgow Haskell Compiler:
+
+`stack setup`
 
 # Building
 

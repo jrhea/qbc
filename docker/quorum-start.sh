@@ -6,4 +6,4 @@ while [ ! -S "/var/qdata/tm.ipc" ]; do
 done
 
 ARGS="--syncmode full --mine --rpc --rpcaddr 0.0.0.0 --rpcapi admin,db,eth,debug,miner,net,shh,txpool,personal,web3,quorum,istanbul --nodiscover"
-PRIVATE_CONFIG=../var/qdata/tm.ipc /opt/geth --datadir /var/qdata/dd $ARGS --rpcport 22000 --port 21000 --nodekey /var/qdata/nodekey --unlock 0 --password /var/qdata/passwords.txt --verbosity=6 2>>/var/qdata/logs/node.log
+/opt/geth --datadir /var/qdata/dd $ARGS --rpcport 22000 --port 21000 --nodekey /var/qdata/nodekey --unlock 0 --password /var/qdata/passwords.txt --verbosity=6 2>>/var/qdata/logs/node.log
