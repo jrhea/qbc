@@ -1,6 +1,6 @@
 FROM ubuntu:16.04
 
-COPY build/constellation-*-linux-386.tar.gz /tmp/constellation.tar.gz
+COPY build/constellation-*-linux-amd64.tar.gz /tmp/constellation.tar.gz
 
 RUN cd /opt && \
   tar xzf /tmp/constellation.tar.gz && \

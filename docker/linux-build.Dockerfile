@@ -14,7 +14,6 @@ RUN cd /opt && wget -q https://storage.googleapis.com/golang/go${GOVERSION}.linu
 
 RUN curl -sSL https://get.haskellstack.org/ | sh && stack setup
 
-RUN echo "#!/bin/bash\ncd /tmp/constellation && stack install && cp /root/.local/bin/constellation-node ./bin/" > build-constellation.sh && chmod +x build-constellation.sh
+RUN echo "#!/bin/bash\ncd /tmp/constellation && stack install" > build-constellation.sh && chmod +x build-constellation.sh
 RUN echo "#!/bin/bash\ncd /tmp/crux && make setup && make build" > build-crux.sh && chmod +x build-crux.sh
 RUN echo "#!/bin/bash\ncd /tmp/geth && make all" > build-geth.sh && chmod +x build-geth.sh
-CMD "echo Building..."
