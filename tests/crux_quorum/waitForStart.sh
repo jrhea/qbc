@@ -14,10 +14,10 @@ while [ $nodeNum -lt 4 ]; do
         sleep 1
         json=`curl -s -X POST --data '{"jsonrpc":"2.0","method":"net_peerCount","params":[],"id":74}' 0.0.0.0:$((22001+nodeNum))`
         result=`node -e "obj = JSON.parse(JSON.stringify($json)); console.log(obj.result);"`
-        if [ "$result" == "0x3" ]; then
+        echo "node: $nodeNum numPeers: $result"
+        if [ "$result" != "0x0" ]; then
           let nodeNum=$nodeNum+1
         fi
-        echo "node: $nodeNum numPeers: $result"
     fi
     let counter=$counter+1
 
