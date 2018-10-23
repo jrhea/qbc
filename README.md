@@ -9,11 +9,11 @@ You can download binaries created with this project under:
 
 # Docker images
 
-You can pull Docker images for Quorum, Crux and Tessera:
+You can pull Docker images for Quorum, Crux, and Constellation:
 ```
 docker pull consensys-docker-qbc.bintray.io/qbc/quorum:0.2
 docker pull consensys-docker-qbc.bintray.io/qbc/crux:0.2
-docker pull consensys-docker-qbc.bintray.io/qbc/tessera:0.2
+docker pull consensys-docker-qbc.bintray.io/qbc/constellation:0.2
 ```
 
 # Development
