@@ -66,13 +66,13 @@ echo 'daa89d4ae250d24b33847343d0cc0116c48331b81e28514522bb7f77f2be5676' >> $WORK
 
 ### Init each node ###
 
-docker run -it -v $WORKDIR/q1:/var/qdata/ -v $CURDIR/istanbul-genesis.json:/tmp/istanbul-genesis.json \
+docker run -i -v $WORKDIR/q1:/var/qdata/ -v $CURDIR/istanbul-genesis.json:/tmp/istanbul-genesis.json \
   consensys/quorum:latest /opt/geth --datadir /var/qdata/dd init /tmp/istanbul-genesis.json
-docker run -it -v $WORKDIR/q2:/var/qdata/ -v $CURDIR/istanbul-genesis.json:/tmp/istanbul-genesis.json \
+docker run -i -v $WORKDIR/q2:/var/qdata/ -v $CURDIR/istanbul-genesis.json:/tmp/istanbul-genesis.json \
   consensys/quorum:latest /opt/geth --datadir /var/qdata/dd init /tmp/istanbul-genesis.json
-docker run -it -v $WORKDIR/q3:/var/qdata/ -v $CURDIR/istanbul-genesis.json:/tmp/istanbul-genesis.json \
+docker run -i -v $WORKDIR/q3:/var/qdata/ -v $CURDIR/istanbul-genesis.json:/tmp/istanbul-genesis.json \
   consensys/quorum:latest /opt/geth --datadir /var/qdata/dd init /tmp/istanbul-genesis.json
-docker run -it -v $WORKDIR/q4:/var/qdata/ -v $CURDIR/istanbul-genesis.json:/tmp/istanbul-genesis.json \
+docker run -i -v $WORKDIR/q4:/var/qdata/ -v $CURDIR/istanbul-genesis.json:/tmp/istanbul-genesis.json \
   consensys/quorum:latest /opt/geth --datadir /var/qdata/dd init /tmp/istanbul-genesis.json
 
 ### Create public/private keypairs for each node ###
