@@ -19,6 +19,6 @@ ARG CACHEBUST=1
 
 # /tmp/constellation/.stack-work/install/x86_64-linux/lts-10.5/8.2.2/bin
 
-RUN echo "#!/bin/bash\ncd /tmp/constellation && stack install && cp /root/.local/bin/constellation-node /tmp/constellation/bin/ && ldd /tmp/constellation/bin/constellation-node | cut -f3- -d ' ' | grep '^/.*' | cut -f1 -d ' '| xargs -I '{}' cp -v '{}' /tmp/constellation/bin/" > build-constellation.sh && chmod +x build-constellation.sh \
+RUN echo "#!/bin/bash\ncd /tmp/constellation && stack --allow-different-user install && cp /root/.local/bin/constellation-node /tmp/constellation/bin/ && ldd /tmp/constellation/bin/constellation-node | cut -f3- -d ' ' | grep '^/.*' | cut -f1 -d ' '| xargs -I '{}' cp -v '{}' /tmp/constellation/bin/" > build-constellation.sh && chmod +x build-constellation.sh \
     && echo "#!/bin/bash\ncd /tmp/crux && make setup && make build" > build-crux.sh && chmod +x build-crux.sh \
     && echo "#!/bin/bash\ncd /tmp/quorum && make all" > build-quorum.sh && chmod +x build-quorum.sh

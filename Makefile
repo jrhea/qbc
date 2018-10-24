@@ -20,7 +20,7 @@ QUORUM_OUTFILES = geth bootnode
 CONSTELLATION_NAME = constellation
 CONSTELLATION_VERSION = v0.3.2
 CONSTELLATION_REPO = https://github.com/jpmorganchase/constellation.git
-CONSTELLATION_BUILD = stack install && cp $(HOME)/.local/bin/constellation-node ./bin/
+CONSTELLATION_BUILD = stack --allow-different-user install && cp $(HOME)/.local/bin/constellation-node ./bin/
 CONSTELLATION_BINPATH = bin
 CONSTELLATION_OUTFILES = constellation-node
 
