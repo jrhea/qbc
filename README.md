@@ -61,7 +61,7 @@ $> make tarball-darwin-64 -j4
 
 Run:
 ```
-$> docker test
+$> make test
 ```
 
 # Release
