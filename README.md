@@ -42,19 +42,19 @@ Install the Glasgow Haskell Compiler:
 
 # Building
 
+To clean, make tarballs, containers, and run tests
+```
+$> make all -j4
+```
+
 To build the tarball package for Linux, run:
 ```
-$> make build/qbc-$(VERSION)-linux-386.tar.gz -j8
+$> make tarball-linux-64 -j4
 ```
 
 To build the tarball package for Mac OS X, run:
 ```
-$> make build/qbc-$(VERSION)-darwin-64.tar.gz -j8
-```
-
-To create the Docker images, you can run:
-```
-$> make -j8
+$> make tarball-darwin-64 -j4
 ```
 
 # Testing
