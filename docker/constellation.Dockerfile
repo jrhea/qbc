@@ -6,7 +6,8 @@ COPY constellation-${version}-${osarch}.tar.gz /tmp/
 RUN cd /opt \
   && tar xzf /tmp/constellation-${version}-${osarch}.tar.gz \
   && rm /tmp/constellation-${version}-${osarch}.tar.gz \
-  && chmod +x /opt/constellation-node
+  && chmod +x /opt/constellation-node \
+  && ln -s /opt/constellation-${version}-${osarch} /opt/constellation-latest
 
 COPY constellation-start.sh /opt/constellation-start.sh
 
