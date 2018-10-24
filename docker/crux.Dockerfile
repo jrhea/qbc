@@ -1,13 +1,14 @@
 FROM ubuntu:16.04
+ARG osarch
+ARG version
+COPY crux-${version}-${osarch}.tar.gz /tmp/
 
-COPY build/crux-*-linux-amd64.tar.gz /tmp/crux.tar.gz
+RUN cd /opt \
+    && tar xzf /tmp/crux-${version}-${osarch}.tar.gz \
+    && rm /tmp/crux-${version}-${osarch}.tar.gz \
+    && chmod +x /opt/crux
 
-RUN cd /opt && \
-  tar xzf /tmp/crux.tar.gz && \
-  rm /tmp/crux.tar.gz && \
-  chmod +x /opt/crux
-
-COPY docker/crux-start.sh /opt/crux-start.sh
+COPY crux-start.sh /opt/crux-start.sh
 
 RUN chmod +x /opt/crux-start.sh
 

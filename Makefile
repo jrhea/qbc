@@ -1,146 +1,113 @@
-VERSION=0.3
-QUORUM_VERSION=v2.1.1-grpc
-CONSTELLATION_VERSION=v0.3.2
-CRUX_VERSION=v1.0.3
-GOOS=$(uname -s | tr '[:upper:]' '[:lower:]')
-GOARCH=64
-BINTRAY_USER=jdoe
-BINTRAY_KEY=pass
+BUILDDIR = build
+BUILDS = linux-64 darwin-64
+HOST_OS = $(shell uname -s | tr '[:upper:]' '[:lower:]')
+GOOS = $(HOST_OS)
+GOARCH = 64
+BINTRAY_USER = jdoe
+BINTRAY_KEY = pass
 
-.PHONY: clean release tag circleci-macos
-.DEFAULT_GOAL := build/.docker-$(VERSION)
+QBC_NAME = qbc
+VERSION = 0.3
 
-build/qbc-$(VERSION)-linux-amd64.tar.gz: build/quorum-$(QUORUM_VERSION)-linux-amd64.tar.gz build/constellation-$(CONSTELLATION_VERSION)-linux-amd64.tar.gz build/crux-$(CRUX_VERSION)-linux-amd64.tar.gz
-	cd build && tar czf qbc-$(VERSION)-linux-amd64.tar.gz quorum-$(QUORUM_VERSION)-linux-amd64.tar.gz constellation-$(CONSTELLATION_VERSION)-linux-amd64.tar.gz crux-$(CRUX_VERSION)-linux-amd64.tar.gz
+QUORUM_NAME = quorum
+QUORUM_VERSION = v2.1.1-grpc
+QUORUM_REPO = https://github.com/ConsenSys/quorum.git
+QUORUM_BUILD = make all
+QUORUM_BINPATH = build/bin
+QUORUM_OUTFILES = geth bootnode
 
-build/qbc-$(VERSION)-darwin-64.tar.gz: build/quorum-$(QUORUM_VERSION)-darwin-64.tar.gz build/constellation-$(CONSTELLATION_VERSION)-darwin-64.tar.gz build/crux-$(CRUX_VERSION)-darwin-64.tar.gz
-	cd build && tar czf qbc-$(VERSION)-darwin-64.tar.gz quorum-$(QUORUM_VERSION)-darwin-64.tar.gz constellation-$(CONSTELLATION_VERSION)-darwin-64.tar.gz crux-$(CRUX_VERSION)-darwin-64.tar.gz
+CONSTELLATION_NAME = constellation
+CONSTELLATION_VERSION = v0.3.2
+CONSTELLATION_REPO = https://github.com/jpmorganchase/constellation.git
+CONSTELLATION_BUILD = stack install && cp $(HOME)/.local/bin/constellation-node ./bin/
+CONSTELLATION_BINPATH = bin
+CONSTELLATION_OUTFILES = constellation-node
 
-quorum-$(QUORUM_VERSION)-darwin-64:
-	git clone --branch $(QUORUM_VERSION) --depth 1 https://github.com/ConsenSys/quorum.git quorum-$(QUORUM_VERSION)-darwin-64
+CRUX_NAME = crux
+CRUX_VERSION = v1.0.3
+CRUX_REPO = https://github.com/blk-io/crux.git
+CRUX_BUILD = make setup && make
+CRUX_BINPATH = bin
+CRUX_OUTFILES = crux
 
-quorum-$(QUORUM_VERSION)-darwin-64/build/bin/geth: quorum-$(QUORUM_VERSION)-darwin-64
-	cd quorum-$(QUORUM_VERSION)-darwin-64 && make all
+PROJECTS = $(shell echo $(QUORUM_NAME) $(CONSTELLATION_NAME) $(CRUX_NAME) | tr '[:lower:]' '[:upper:]')
+PACKAGES = $(foreach project,$(PROJECTS), $(foreach build,$(BUILDS), $($(project)_NAME)-$($(project)_VERSION)-$(build) ) )
+RUN_CONTAINERS = $(firstword $(BUILDS))-docker-$(QUORUM_NAME) $(firstword $(BUILDS))-docker-$(CONSTELLATION_NAME) $(firstword $(BUILDS))-docker-$(CRUX_NAME)
+BUILD_CONTAINERS = docker-build-$(VERSION)
 
-build/quorum-$(QUORUM_VERSION)-darwin-64.tar.gz: quorum-$(QUORUM_VERSION)-darwin-64/build/bin/geth
-	mkdir -p build
-	tar cf build/quorum-$(QUORUM_VERSION)-darwin-64.tar -C docs/quorum .
-	tar rf build/quorum-$(QUORUM_VERSION)-darwin-64.tar -C quorum-$(QUORUM_VERSION)-darwin-64/build/bin geth bootnode
-	gzip build/quorum-$(QUORUM_VERSION)-darwin-64.tar
+.PHONY: all qbc-containers qbc-tarballs clean clobber check_clobber release tag test circleci-macos
+.DEFAULT_GOAL := containers
 
-quorum-$(QUORUM_VERSION)-linux-amd64:
-	git clone --branch $(QUORUM_VERSION) --depth 1 https://github.com/ConsenSys/quorum.git quorum-$(QUORUM_VERSION)-linux-amd64
+ifneq ($(filter all,$(MAKECMDGOALS)),)
+.NOTPARALLEL:
+endif
 
-quorum-$(QUORUM_VERSION)-linux-amd64/build/bin/geth: quorum-$(QUORUM_VERSION)-linux-amd64 build/.docker-build-$(VERSION)
-	docker run -it -v $(CURDIR)/quorum-$(QUORUM_VERSION)-linux-amd64:/tmp/geth consensys/linux-build:$(VERSION) ./build-geth.sh
+all: clean
+	$(MAKE) qbc && $(MAKE) test
 
-build/quorum-$(QUORUM_VERSION)-linux-amd64.tar.gz: quorum-$(QUORUM_VERSION)-linux-amd64/build/bin/geth
-	mkdir -p build
-	tar cf build/quorum-$(QUORUM_VERSION)-linux-amd64.tar -C docs/quorum .
-	tar rf build/quorum-$(QUORUM_VERSION)-linux-amd64.tar -C quorum-$(QUORUM_VERSION)-linux-amd64/build/bin geth bootnode
-	gzip build/quorum-$(QUORUM_VERSION)-linux-amd64.tar
+qbc: qbc-tarballs qbc-containers
 
-constellation-$(CONSTELLATION_VERSION):
-	git clone --branch $(CONSTELLATION_VERSION) --depth 1 https://github.com/jpmorganchase/constellation.git constellation-$(CONSTELLATION_VERSION)
+qbc-containers: $(RUN_CONTAINERS)
 
-constellation-$(CONSTELLATION_VERSION)/bin/constellation-node: constellation-$(CONSTELLATION_VERSION)
-	cd constellation-$(CONSTELLATION_VERSION) && stack install && cp $(HOME)/.local/bin/constellation-node ./bin/
+qbc-tarballs: $(foreach build,$(BUILDS),tarball-$(build))
 
-build/constellation-$(CONSTELLATION_VERSION)-darwin-64.tar.gz: constellation-$(CONSTELLATION_VERSION)/bin/constellation-node
-	mkdir -p build
-	tar cf build/constellation-$(CONSTELLATION_VERSION)-darwin-64.tar -C docs/constellation .
-	tar rf build/constellation-$(CONSTELLATION_VERSION)-darwin-64.tar -C constellation-$(CONSTELLATION_VERSION)/bin constellation-node
-	gzip build/constellation-$(CONSTELLATION_VERSION)-darwin-64.tar
+tarball-%: $(PACKAGES)
+	cd $(BUILDDIR) && tar czf qbc-$(VERSION)-$*.tar.gz $(addsuffix .tar.gz, $?)
 
-constellation-$(CONSTELLATION_VERSION)-linux-amd64:
-	git clone --branch $(CONSTELLATION_VERSION) --depth 1 https://github.com/jpmorganchase/constellation.git constellation-$(CONSTELLATION_VERSION)-linux-amd64
+$(PACKAGES): $(addprefix .build~,$(PACKAGES))
+	$(eval PROJECT = $(shell echo $(firstword $(subst -, ,$@))| tr '[:lower:]' '[:upper:]'))
+	@echo "BUILD, TAR & GZIP PACKAGE: $@"
+	@cd $(BUILDDIR) \
+	&& tar cf $@.tar -C $(CURDIR)/docs/$($(PROJECT)_NAME) . \
+	&& tar rf $@.tar -C $@/$($(PROJECT)_BINPATH) $($(PROJECT)_OUTFILES) \
+	&& find $@/$($(PROJECT)_BINPATH) -name '*.so.*' | xargs tar rf $@.tar \
+	&& gzip -f $@.tar
 
-crux-$(CRUX_VERSION):
-	git clone --branch $(CRUX_VERSION) --depth 1 https://github.com/blk-io/crux.git crux-$(CRUX_VERSION)
+.build~%: $(addprefix .clone~,$(PACKAGES)) | $(BUILD_CONTAINERS)
+	$(eval PACKAGE = $(shell echo $(lastword $(subst ~, ,$@))))
+	$(eval PROJECT = $(shell echo $(firstword $(subst -, ,$(PACKAGE)))| tr '[:lower:]' '[:upper:]'))
+	$(eval CONTAINER_$(PROJECT)_BUILD = docker run -it -v $(shell pwd)/$(BUILDDIR)/$(PACKAGE):/tmp/$($(PROJECT)_NAME) consensys/linux-build:$(VERSION) ./build-$($(PROJECT)_NAME).sh)
+	@test -e $(BUILDDIR)/$@ \
+	|| ( [[ "$(PACKAGE)" == *"linux"* ]] && ( cd $(BUILDDIR)/$(PACKAGE) && $(CONTAINER_$(PROJECT)_BUILD) && touch ../$@ ) || echo "SKIP" \
+	&&   [[ "$(PACKAGE)" == *"darwin"* ]] && ( cd $(BUILDDIR)/$(PACKAGE) && $($(PROJECT)_BUILD) && touch ../$@) || echo "SKIP" )
 
-crux-$(CRUX_VERSION)/bin/crux: crux-$(CRUX_VERSION)
-	cd crux-$(CRUX_VERSION) && make setup && make
+.clone~%:
+	$(eval PACKAGE = $(shell echo $(lastword $(subst ~, ,$@))))
+	$(eval PROJECT = $(shell echo $(firstword $(subst -, ,$(PACKAGE)))| tr '[:lower:]' '[:upper:]'))
+	@mkdir -p $(BUILDDIR)
+	@test -e $(BUILDDIR)/$(PACKAGE) || ( echo "CLONE: $($(PROJECT)_NAME) INTO: $(PACKAGE)" \
+	&& cd $(BUILDDIR) \
+	&& git clone --branch $($(PROJECT)_VERSION) --depth 1 $($(PROJECT)_REPO) $(PACKAGE) \
+	&& touch $@ )
 
-build/crux-$(CRUX_VERSION)-darwin-64.tar.gz: crux-$(CRUX_VERSION)/bin/crux
-	mkdir -p build
-	tar cf build/crux-$(CRUX_VERSION)-darwin-64.tar -C docs/crux .
-	tar rf build/crux-$(CRUX_VERSION)-darwin-64.tar -C crux-$(CRUX_VERSION)/bin crux
-	gzip build/crux-$(CRUX_VERSION)-darwin-64.tar
+$(BUILD_CONTAINERS):
+	@test -e $(CURDIR)/$(BUILDDIR)/.$@ || ( echo "BUILDING BUILD_CONTAINER: $@" \
+	&& mkdir -p $(CURDIR)/$(BUILDDIR)/$@ \
+	&& cd $(CURDIR)/$(BUILDDIR)/$@ \
+	&& docker build --build-arg CACHEBUST=$(date +%s) -f $(CURDIR)/docker/linux-build.Dockerfile -t consensys/linux-build:$(VERSION) . \
+	&& touch $(CURDIR)/$(BUILDDIR)/.$@ )
 
-crux-$(CRUX_VERSION)-linux-amd64:
-	git clone --branch $(CRUX_VERSION) --depth 1 https://github.com/blk-io/crux.git crux-$(CRUX_VERSION)-linux-amd64
-
-build/.docker-build-$(VERSION):
-	mkdir -p build
-	docker build -f docker/linux-build.Dockerfile -t consensys/linux-build:$(VERSION) .
-	touch build/.docker-build-$(VERSION)
-
-constellation-$(CONSTELLATION_VERSION)-linux-amd64/bin/constellation-node: constellation-$(CONSTELLATION_VERSION)-linux-amd64 build/.docker-build-$(VERSION)
-	docker run -it -v $(CURDIR)/constellation-$(CONSTELLATION_VERSION)-linux-amd64:/tmp/constellation consensys/linux-build:$(VERSION) ./build-constellation.sh
-
-build/constellation-$(CONSTELLATION_VERSION)-linux-amd64.tar.gz: constellation-$(CONSTELLATION_VERSION)-linux-amd64/bin/constellation-node
-	mkdir -p build
-	docker run -it -v $(CURDIR)/constellation-v0.3.2-linux-amd64:/tmp/constellation consensys/linux-build:0.3 /bin/bash -c "cp /tmp/constellation/.stack-work/install/x86_64-linux/lts-10.5/8.2.2/bin/constellation-node /tmp/constellation/bin/ && ldd /tmp/constellation/bin/constellation-node | cut -f3- -d ' ' | grep '^/.*' | cut -f1 -d ' '| xargs -I '{}' cp -v '{}' /tmp/constellation/bin/"
-	tar cf build/constellation-$(CONSTELLATION_VERSION)-linux-amd64.tar -C docs/constellation .
-	tar rf build/constellation-$(CONSTELLATION_VERSION)-linux-amd64.tar -C constellation-$(CONSTELLATION_VERSION)-linux-amd64/bin constellation-node
-	find constellation-$(CONSTELLATION_VERSION)-linux-amd64/bin -name '*.so.*' | xargs tar rf build/constellation-$(CONSTELLATION_VERSION)-linux-amd64.tar
-	gzip build/constellation-$(CONSTELLATION_VERSION)-linux-amd64.tar
-
-crux-$(CRUX_VERSION)-linux-amd64/bin/crux: crux-$(CRUX_VERSION)-linux-amd64 build/.docker-build-$(VERSION)
-	docker run -it -v $(CURDIR)/crux-$(CRUX_VERSION)-linux-amd64:/tmp/crux consensys/linux-build:$(VERSION) ./build-crux.sh
-
-build/crux-$(CRUX_VERSION)-linux-amd64.tar.gz: crux-$(CRUX_VERSION)-linux-amd64/bin/crux
-	mkdir -p build
-	tar cf build/crux-$(CRUX_VERSION)-linux-amd64.tar -C docs/crux .
-	tar rf build/crux-$(CRUX_VERSION)-linux-amd64.tar -C crux-$(CRUX_VERSION)-linux-amd64/bin crux
-	gzip build/crux-$(CRUX_VERSION)-linux-amd64.tar
-
-build/.docker-$(VERSION)-quorum: build/qbc-$(VERSION)-linux-amd64.tar.gz build/qbc-$(VERSION)-darwin-64.tar.gz
-	docker build -f docker/quorum.Dockerfile -t consensys/quorum:$(VERSION) .
-	docker tag consensys/quorum:$(VERSION) consensys/quorum:latest
-	touch build/.docker-$(VERSION)-quorum
-
-build/.docker-$(VERSION)-crux: build/qbc-$(VERSION)-linux-amd64.tar.gz build/qbc-$(VERSION)-darwin-64.tar.gz
-	docker build -f docker/crux.Dockerfile -t consensys/crux:$(VERSION) .
-	docker tag consensys/crux:$(VERSION) consensys/crux:latest
-	touch build/.docker-$(VERSION)-crux
-
-build/.docker-$(VERSION)-constellation: build/qbc-$(VERSION)-linux-amd64.tar.gz build/qbc-$(VERSION)-darwin-64.tar.gz
-	docker build -f docker/constellation.Dockerfile -t consensys/constellation:$(VERSION) .
-	docker tag consensys/constellation:$(VERSION) consensys/constellation:latest
-	touch build/.docker-$(VERSION)-constellation
-
-build/.docker-$(VERSION): build/.docker-$(VERSION)-quorum build/.docker-$(VERSION)-constellation build/.docker-$(VERSION)-crux
-	touch build/.docker-$(VERSION)
-
-build/.dockerpush-$(VERSION): build/.docker-$(VERSION)-quorum build/.docker-$(VERSION)-constellation build/.docker-$(VERSION)-crux
-	docker login -u $(BINTRAY_USER) -p $(BINTRAY_KEY) consensys-docker-qbc.bintray.io
-	docker tag consensys/quorum:$(VERSION) consensys-docker-qbc.bintray.io/consensys/quorum:$(VERSION)
-	docker push consensys-docker-qbc.bintray.io/consensys/quorum:$(VERSION)
-	docker tag consensys/constellation:$(VERSION) consensys-docker-qbc.bintray.io/consensys/constellation:$(VERSION)
-	docker push consensys-docker-qbc.bintray.io/consensys/constellation:$(VERSION)
-	docker tag consensys/crux:$(VERSION) consensys-docker-qbc.bintray.io/consensys/crux:$(VERSION)
-	docker push consensys-docker-qbc.bintray.io/consensys/crux:$(VERSION)
-	touch build/.dockerpush-$(VERSION)
+$(RUN_CONTAINERS): $(PACKAGES)
+	$(eval PROJECT = $(shell echo $(lastword $(subst -, ,$@))| tr '[:lower:]' '[:upper:]'))
+	$(eval OS = $(shell echo $(word 1, $(subst -, ,$@))))
+	$(eval ARCH = $(shell echo $(word 2, $(subst -, ,$@))))
+	@test -e $(CURDIR)/$(BUILDDIR)/.docker-$($(PROJECT)_NAME) || ( echo "BUILDING RUN_CONTAINER: $@" \
+	&& mkdir -p $(CURDIR)/$(BUILDDIR)/docker-$($(PROJECT)_NAME) \
+	&& cp $(CURDIR)/docker/$($(PROJECT)_NAME)-start.sh $(CURDIR)/$(BUILDDIR)/docker-$($(PROJECT)_NAME) \
+	&& mv $(CURDIR)/build/$($(PROJECT)_NAME)-$($(PROJECT)_VERSION)-$(OS)-$(ARCH).tar.gz $(CURDIR)/$(BUILDDIR)/docker-$($(PROJECT)_NAME) \
+	&& cd $(CURDIR)/$(BUILDDIR)/docker-$($(PROJECT)_NAME) \
+	&& docker build --build-arg osarch=$(OS)-$(ARCH) --build-arg version=$($(PROJECT)_VERSION) -f ../../docker/$($(PROJECT)_NAME).Dockerfile -t consensys/$($(PROJECT)_NAME):$(VERSION) . \
+	&& docker tag consensys/$($(PROJECT)_NAME):$(VERSION) consensys/$($(PROJECT)_NAME):latest \
+	&& touch $(CURDIR)/$(BUILDDIR)/.docker-$($(PROJECT)_NAME) )
 
 clean:
-	rm -Rf constellation-*
-	rm -Rf crux-*
-	rm -Rf quorum-*
-	rm -Rf build
+	rm -Rf $(BUILDDIR)
 
-build/qbc-$(VERSION)-linux-amd64.tar.gz.asc: build/qbc-$(VERSION)-linux-amd64.tar.gz
-	gpg --detach-sign -o build/qbc-$(VERSION)-linux-amd64.tar.gz.asc build/qbc-$(VERSION)-linux-amd64.tar.gz
+check_clobber:
+	@echo "You have chosen to go nuclear.  Are you sure you want to delete ALL stopped containers (Y/n)?" && read ans && [ $$ans == Y ]
 
-build/qbc-$(VERSION)-darwin-64.tar.gz.asc: build/qbc-$(VERSION)-darwin-64.tar.gz
-	gpg --detach-sign -o build/qbc-$(VERSION)-darwin-64.tar.gz.asc build/qbc-$(VERSION)-darwin-64.tar.gz
-
-build/.tgzpush-$(VERSION): build/qbc-$(VERSION)-linux-amd64.tar.gz.asc build/qbc-$(VERSION)-darwin-64.tar.gz.asc
-	curl -T build/qbc-$(VERSION)-linux-amd64.tar.gz -u$(BINTRAY_USER):$(BINTRAY_KEY) -H "X-Bintray-Package:qbc" -H "X-Bintray-Version:$(VERSION)" https://api.bintray.com/content/consensys/binaries/qbc/$(VERSION)/qbc-$(VERSION)-linux-amd64.tar.gz
-	curl -T build/qbc-$(VERSION)-linux-amd64.tar.gz.asc -u$(BINTRAY_USER):$(BINTRAY_KEY) -H "X-Bintray-Package:qbc" -H "X-Bintray-Version:$(VERSION)" https://api.bintray.com/content/consensys/binaries/qbc/$(VERSION)/qbc-$(VERSION)-linux-amd64.tar.gz.asc
-	curl -T build/qbc-$(VERSION)-darwin-64.tar.gz -u$(BINTRAY_USER):$(BINTRAY_KEY) -H "X-Bintray-Package:qbc" -H "X-Bintray-Version:$(VERSION)" https://api.bintray.com/content/consensys/binaries/qbc/$(VERSION)/qbc-$(VERSION)-darwin-64.tar.gz
-	curl -T build/qbc-$(VERSION)-darwin-64.tar.gz.asc -u$(BINTRAY_USER):$(BINTRAY_KEY) -H "X-Bintray-Package:qbc" -H "X-Bintray-Version:$(VERSION)" https://api.bintray.com/content/consensys/binaries/qbc/$(VERSION)/qbc-$(VERSION)-darwin-64.tar.gz.asc
-	touch build/.tgzpush-$(VERSION)
+clobber: check_clobber clean
+	docker ps -a | awk '{ print $$1,$$2 }' | grep consensys | awk '{print $$1 }' | xargs -I {} docker container stop {} && docker system prune -a -f --volumes
 
 tag:
 	git tag -s $(VERSION)
@@ -148,5 +115,41 @@ tag:
 release: tag build/.dockerpush-$(VERSION) build/.tgzpush-$(VERSION)
 	git push origin master --tags
 
-circleci-macos: build/qbc-$(VERSION)-darwin-64.tar.gz
+test: $(RUN_CONTAINERS)
+	@echo "Make sure all containers are stopped"
+	@cd tests/constellation_quorum && ( make stop && cd ../.. || cd ../.. )
+	@cd tests/crux_quorum && ( make stop && cd ../.. || cd ../.. )
+	@cd tests/crux_relays_quorum && ( make stop && cd ../.. || cd ../.. )
+	@echo "Run Tests"
+	@cd tests/constellation_quorum && make clean && ( make test && make stop || make stop )
+	@cd tests/crux_quorum && make stop && make clean && ( make test && make stop || make stop )
+	@cd tests/crux_relays_quorum && make stop && make clean && ( make test && make stop || make stop )
+
+circleci-macos: tarball-darwin-64
+	mkdir -p $(BUILDDIR) && cd $(BUILDDIR) && tar czf $(QBC_NAME)-$(VERSION)-darwin-64.tar.gz $(addsuffix .tar.gz,$(filter %darwin-64,$(PACKAGES)))
+
+$(BUILDDIR)/.dockerpush-$(VERSION): containers
+	docker login -u $(BINTRAY_USER) -p $(BINTRAY_KEY) consensys-docker-qbc.bintray.io
+	docker tag consensys/quorum:$(VERSION) consensys-docker-qbc.bintray.io/consensys/quorum:$(VERSION)
+	docker push consensys-docker-qbc.bintray.io/consensys/quorum:$(VERSION)
+	docker tag consensys/constellation:$(VERSION) consensys-docker-qbc.bintray.io/consensys/constellation:$(VERSION)
+	docker push consensys-docker-qbc.bintray.io/consensys/constellation:$(VERSION)
+	docker tag consensys/crux:$(VERSION) consensys-docker-qbc.bintray.io/consensys/crux:$(VERSION)
+	docker push consensys-docker-qbc.bintray.io/consensys/crux:$(VERSION)
+	touch $(BUILDDIR)/.dockerpush-$(VERSION)
+
+$(BUILDDIR)/qbc-$(VERSION)-linux-64.tar.gz.asc: $(BUILDDIR)/qbc-$(VERSION)-linux-64.tar.gz
+	gpg --detach-sign -o $(BUILDDIR)/qbc-$(VERSION)-linux-64.tar.gz.asc $(BUILDDIR)/qbc-$(VERSION)-linux-64.tar.gz
+
+$(BUILDDIR)/qbc-$(VERSION)-darwin-64.tar.gz.asc: $(BUILDDIR)/qbc-$(VERSION)-darwin-64.tar.gz
+	gpg --detach-sign -o $(BUILDDIR)/qbc-$(VERSION)-darwin-64.tar.gz.asc $(BUILDDIR)/qbc-$(VERSION)-darwin-64.tar.gz
+
+$(BUILDDIR)/.tgzpush-$(VERSION): $(BUILDDIR)/qbc-$(VERSION)-linux-64.tar.gz.asc $(BUILDDIR)/qbc-$(VERSION)-darwin-64.tar.gz.asc
+	curl -T $(BUILDDIR)/qbc-$(VERSION)-linux-64.tar.gz -u$(BINTRAY_USER):$(BINTRAY_KEY) -H "X-Bintray-Package:qbc" -H "X-Bintray-Version:$(VERSION)" https://api.bintray.com/content/consensys/binaries/qbc/$(VERSION)/qbc-$(VERSION)-linux-64.tar.gz
+	curl -T $(BUILDDIR)/qbc-$(VERSION)-linux-64.tar.gz.asc -u$(BINTRAY_USER):$(BINTRAY_KEY) -H "X-Bintray-Package:qbc" -H "X-Bintray-Version:$(VERSION)" https://api.bintray.com/content/consensys/binaries/qbc/$(VERSION)/qbc-$(VERSION)-linux-64.tar.gz.asc
+	curl -T $(BUILDDIR)/qbc-$(VERSION)-darwin-64.tar.gz -u$(BINTRAY_USER):$(BINTRAY_KEY) -H "X-Bintray-Package:qbc" -H "X-Bintray-Version:$(VERSION)" https://api.bintray.com/content/consensys/binaries/qbc/$(VERSION)/qbc-$(VERSION)-darwin-64.tar.gz
+	curl -T $(BUILDDIR)/qbc-$(VERSION)-darwin-64.tar.gz.asc -u$(BINTRAY_USER):$(BINTRAY_KEY) -H "X-Bintray-Package:qbc" -H "X-Bintray-Version:$(VERSION)" https://api.bintray.com/content/consensys/binaries/qbc/$(VERSION)/qbc-$(VERSION)-darwin-64.tar.gz.asc
+	touch $(BUILDDIR)/.tgzpush-$(VERSION)
+
+
 

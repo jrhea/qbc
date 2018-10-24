@@ -1,13 +1,14 @@
 FROM ubuntu:16.04
+ARG osarch
+ARG version
+COPY quorum-${version}-${osarch}.tar.gz /tmp/
 
-COPY build/quorum-*-linux-amd64.tar.gz /tmp/quorum.tar.gz
+RUN cd /opt \
+  && tar xzf /tmp/quorum-${version}-${osarch}.tar.gz \
+  && rm /tmp/quorum-${version}-${osarch}.tar.gz \
+  && chmod +x /opt/geth
 
-RUN cd /opt && \
-  tar xzf /tmp/quorum.tar.gz && \
-  rm /tmp/quorum.tar.gz && \
-  chmod +x /opt/geth
-
-COPY docker/quorum-start.sh /opt/quorum-start.sh
+COPY quorum-start.sh /opt/quorum-start.sh
 
 RUN chmod +x /opt/quorum-start.sh
 

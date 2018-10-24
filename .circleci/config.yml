@@ -6,5 +6,6 @@ jobs:
     steps:
       - run: brew install go berkeley-db leveldb libsodium maven haskell-stack && stack setup
       - checkout
+      - run: cat Makefile | sed 's/BUILDS = linux-64 darwin-64/BUILDS = darwin-64/' > Makefile2 && mv Makefile2 Makefile && mkdir -p build && touch build/.docker-build-0.3
       - run: make circleci-macos
 
