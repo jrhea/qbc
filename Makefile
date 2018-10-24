@@ -1,3 +1,4 @@
+SHELL := /bin/bash
 BUILDDIR = build
 BUILDS = linux-64 darwin-64
 HOST_OS = $(shell uname -s | tr '[:upper:]' '[:lower:]')
