@@ -36,8 +36,8 @@ PACKAGES = $(foreach project,$(PROJECTS), $(foreach build,$(BUILDS), $($(project
 RUN_CONTAINERS = $(firstword $(BUILDS))-docker-$(QUORUM_NAME) $(firstword $(BUILDS))-docker-$(CONSTELLATION_NAME) $(firstword $(BUILDS))-docker-$(CRUX_NAME)
 BUILD_CONTAINERS = docker-build-$(VERSION)
 
-.PHONY: all qbc-containers qbc-tarballs clean clobber check_clobber release tag test circleci-macos
-.DEFAULT_GOAL := containers
+.PHONY: all qbc qbc-containers qbc-tarballs clean clobber check_clobber release tag test circleci-macos
+.DEFAULT_GOAL := qbc
 
 ifneq ($(filter all,$(MAKECMDGOALS)),)
 .NOTPARALLEL:
