@@ -57,15 +57,15 @@ tarball-%: $(PACKAGES)
 
 $(PACKAGES): $(addprefix .build~,$(PACKAGES))
 	$(eval PROJECT = $(shell echo $(firstword $(subst -, ,$@))| tr '[:lower:]' '[:upper:]'))
-	@echo "BUILD, TAR & GZIP PACKAGE: $@"
-	@cd $(BUILDDIR) \
+	@test -e $(BUILDDIR)/$@.tar.gz \
+	|| echo "BUILD, TAR & GZIP PACKAGE: $@" && cd $(BUILDDIR) \
 	&& tar cf $@.tar -C $(CURDIR)/docs/$($(PROJECT)_NAME) . \
 	&& tar rf $@.tar -C $@/$($(PROJECT)_BINPATH) $($(PROJECT)_OUTFILES) \
 	&& find $@/$($(PROJECT)_BINPATH) -name '*.so.*' | xargs tar rf $@.tar \
 	&& gzip -f $@.tar
 
 .build~%: $(addprefix .clone~,$(PACKAGES)) | $(BUILD_CONTAINERS)
-	$(eval PACKAGE = $(shell echo $(lastword $(subst ~, ,$@))))
+	$(eval PACKAGE = $*)
 	$(eval PROJECT = $(shell echo $(firstword $(subst -, ,$(PACKAGE)))| tr '[:lower:]' '[:upper:]'))
 	$(eval CONTAINER_$(PROJECT)_BUILD = docker run -i -v $(shell pwd)/$(BUILDDIR)/$(PACKAGE):/tmp/$($(PROJECT)_NAME) consensys/linux-build:$(VERSION) ./build-$($(PROJECT)_NAME).sh)
 	@test -e $(BUILDDIR)/$@ \
@@ -73,7 +73,7 @@ $(PACKAGES): $(addprefix .build~,$(PACKAGES))
 	&&   [[ "$(PACKAGE)" == *"darwin"* ]] && ( cd $(BUILDDIR)/$(PACKAGE) && $($(PROJECT)_BUILD) && touch ../$@) || echo "SKIP" )
 
 .clone~%:
-	$(eval PACKAGE = $(shell echo $(lastword $(subst ~, ,$@))))
+	$(eval PACKAGE = $*)
 	$(eval PROJECT = $(shell echo $(firstword $(subst -, ,$(PACKAGE)))| tr '[:lower:]' '[:upper:]'))
 	@mkdir -p $(BUILDDIR)
 	@test -e $(BUILDDIR)/$(PACKAGE) || ( echo "CLONE: $($(PROJECT)_NAME) INTO: $(PACKAGE)" \
@@ -101,21 +101,6 @@ $(RUN_CONTAINERS): $(PACKAGES)
 	&& docker tag consensys/$($(PROJECT)_NAME):$(VERSION) consensys/$($(PROJECT)_NAME):latest \
 	&& touch $(CURDIR)/$(BUILDDIR)/.docker-$($(PROJECT)_NAME) )
 
-clean:
-	rm -Rf $(BUILDDIR)
-
-check_clobber:
-	@echo "You have chosen to go nuclear.  Are you sure you want to delete ALL stopped containers (Y/n)?" && read ans && [ $$ans == Y ]
-
-clobber: check_clobber clean
-	docker ps -a | awk '{ print $$1,$$2 }' | grep consensys | awk '{print $$1 }' | xargs -I {} docker container stop {} && docker system prune -a -f --volumes
-
-tag:
-	git tag -s $(VERSION)
-
-release: tag build/.dockerpush-$(VERSION) build/.tgzpush-$(VERSION)
-	git push origin master --tags
-
 test: $(RUN_CONTAINERS)
 	@echo "Make sure all containers are stopped"
 	@cd tests/constellation_quorum && ( make stop && cd ../.. || cd ../.. )
@@ -126,31 +111,38 @@ test: $(RUN_CONTAINERS)
 	@cd tests/crux_quorum && make stop && make clean && ( make test && make stop || make stop )
 	@cd tests/crux_relays_quorum && make stop && make clean && ( make test && make stop || make stop )
 
+release: tag $(BUILDDIR)/.dockerpush $(BUILDDIR)/.tgzpush
+	git push origin master --tags
+
+tag:
+	git tag -s $(VERSION)
+
+$(BUILDDIR)/.dockerpush: dockerlogin $(addprefix $(BUILDDIR)/,$(addsuffix .$@-$(VERSION)-, $(shell echo $(PROJECTS) | tr '[:upper:]' '[:lower:]')))
+	touch $(BUILDDIR)/.dockerpush
+
+$(BUILDDIR)/.dockerlogin: 
+	docker login -u $(BINTRAY_USER) -p $(BINTRAY_KEY) consensys-docker-qbc.bintray.io
+	
+$(BUILDDIR)/.dockerpush-$(VERSION)-%: containers
+	docker tag consensys/:$(VERSION) consensys-docker-qbc.bintray.io/consensys/$*:$(VERSION)
+	docker push consensys-docker-qbc.bintray.io/consensys/$*:$(VERSION) && touch $@
+
+$(BUILDDIR)/.tgzpush: $(addsuffix .tar.gz.asc, $(addprefix $(BUILDDIR)/qbc-$(VERSION)-, $(BUILDS)))
+	touch $(BUILDDIR)/.tgzpush
+
+$(BUILDDIR)/qbc-$(VERSION)-%: qbc-tarballs
+	gpg --detach-sign -o $@ $(subst .asc,,$@)
+	curl -T $@ -u$(BINTRAY_USER):$(BINTRAY_KEY) -H "X-Bintray-Package:qbc" -H "X-Bintray-Version:$(VERSION)" https://api.bintray.com/content/consensys/binaries/qbc/$(VERSION)/qbc-$(VERSION)-$*.tar.gz
+	curl -T $@.asc -u$(BINTRAY_USER):$(BINTRAY_KEY) -H "X-Bintray-Package:qbc" -H "X-Bintray-Version:$(VERSION)" https://api.bintray.com/content/consensys/binaries/qbc/$(VERSION)/qbc-$(VERSION)-$*.tar.gz.asc
+
 circleci-macos: tarball-darwin-64
 	mkdir -p $(BUILDDIR) && cd $(BUILDDIR) && tar czf $(QBC_NAME)-$(VERSION)-darwin-64.tar.gz $(addsuffix .tar.gz,$(filter %darwin-64,$(PACKAGES)))
 
-$(BUILDDIR)/.dockerpush-$(VERSION): containers
-	docker login -u $(BINTRAY_USER) -p $(BINTRAY_KEY) consensys-docker-qbc.bintray.io
-	docker tag consensys/quorum:$(VERSION) consensys-docker-qbc.bintray.io/consensys/quorum:$(VERSION)
-	docker push consensys-docker-qbc.bintray.io/consensys/quorum:$(VERSION)
-	docker tag consensys/constellation:$(VERSION) consensys-docker-qbc.bintray.io/consensys/constellation:$(VERSION)
-	docker push consensys-docker-qbc.bintray.io/consensys/constellation:$(VERSION)
-	docker tag consensys/crux:$(VERSION) consensys-docker-qbc.bintray.io/consensys/crux:$(VERSION)
-	docker push consensys-docker-qbc.bintray.io/consensys/crux:$(VERSION)
-	touch $(BUILDDIR)/.dockerpush-$(VERSION)
+clean:
+	rm -Rf $(BUILDDIR)
 
-$(BUILDDIR)/qbc-$(VERSION)-linux-64.tar.gz.asc: $(BUILDDIR)/qbc-$(VERSION)-linux-64.tar.gz
-	gpg --detach-sign -o $(BUILDDIR)/qbc-$(VERSION)-linux-64.tar.gz.asc $(BUILDDIR)/qbc-$(VERSION)-linux-64.tar.gz
+check_clobber:
+	@echo "You have chosen to go nuclear.  Are you sure you want to delete ALL stopped containers (Y/n)?" && read ans && [ $$ans == Y ]
 
-$(BUILDDIR)/qbc-$(VERSION)-darwin-64.tar.gz.asc: $(BUILDDIR)/qbc-$(VERSION)-darwin-64.tar.gz
-	gpg --detach-sign -o $(BUILDDIR)/qbc-$(VERSION)-darwin-64.tar.gz.asc $(BUILDDIR)/qbc-$(VERSION)-darwin-64.tar.gz
-
-$(BUILDDIR)/.tgzpush-$(VERSION): $(BUILDDIR)/qbc-$(VERSION)-linux-64.tar.gz.asc $(BUILDDIR)/qbc-$(VERSION)-darwin-64.tar.gz.asc
-	curl -T $(BUILDDIR)/qbc-$(VERSION)-linux-64.tar.gz -u$(BINTRAY_USER):$(BINTRAY_KEY) -H "X-Bintray-Package:qbc" -H "X-Bintray-Version:$(VERSION)" https://api.bintray.com/content/consensys/binaries/qbc/$(VERSION)/qbc-$(VERSION)-linux-64.tar.gz
-	curl -T $(BUILDDIR)/qbc-$(VERSION)-linux-64.tar.gz.asc -u$(BINTRAY_USER):$(BINTRAY_KEY) -H "X-Bintray-Package:qbc" -H "X-Bintray-Version:$(VERSION)" https://api.bintray.com/content/consensys/binaries/qbc/$(VERSION)/qbc-$(VERSION)-linux-64.tar.gz.asc
-	curl -T $(BUILDDIR)/qbc-$(VERSION)-darwin-64.tar.gz -u$(BINTRAY_USER):$(BINTRAY_KEY) -H "X-Bintray-Package:qbc" -H "X-Bintray-Version:$(VERSION)" https://api.bintray.com/content/consensys/binaries/qbc/$(VERSION)/qbc-$(VERSION)-darwin-64.tar.gz
-	curl -T $(BUILDDIR)/qbc-$(VERSION)-darwin-64.tar.gz.asc -u$(BINTRAY_USER):$(BINTRAY_KEY) -H "X-Bintray-Package:qbc" -H "X-Bintray-Version:$(VERSION)" https://api.bintray.com/content/consensys/binaries/qbc/$(VERSION)/qbc-$(VERSION)-darwin-64.tar.gz.asc
-	touch $(BUILDDIR)/.tgzpush-$(VERSION)
-
-
-
+clobber: check_clobber clean
+	docker ps -a | awk '{ print $$1,$$2 }' | grep consensys | awk '{print $$1 }' | xargs -I {} docker container stop {} && docker system prune -a -f --volumes
