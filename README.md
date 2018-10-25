@@ -29,16 +29,15 @@ Install:
 Config:
 > Add /var/folders to Preferences > File Sharing
 
-
 ## Binaries
 
 On a Mac machine, install required binaries for all projects:
 
-`$> brew install berkeley-db leveldb libsodium maven haskell-stack`
+`$> brew install berkeley-db leveldb libsodium maven haskell-stack go node`
 
-Install the Glasgow Haskell Compiler:
+You will also need java: `brew cask install java`
 
-`stack setup`
+Install the Glasgow Haskell Compiler: `stack setup`
 
 # Building
 
@@ -51,11 +50,13 @@ To build the tarball package for Linux, run:
 ```
 $> make tarball-linux-64 -j4
 ```
+> Note: Check the Makefile to make sure that `linux-64` is added to the BUILDS variable 
 
 To build the tarball package for Mac OS X, run:
 ```
 $> make tarball-darwin-64 -j4
 ```
+> Note: Check the Makefile to make sure that `darwin-64` is added to the BUILDS variable 
 
 # Testing
 
