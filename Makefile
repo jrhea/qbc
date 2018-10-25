@@ -85,7 +85,8 @@ $(BUILD_CONTAINERS):
 	@test -e $(CURDIR)/$(BUILDDIR)/.$@ || ( echo "BUILDING BUILD_CONTAINER: $@" \
 	&& mkdir -p $(CURDIR)/$(BUILDDIR)/$@ \
 	&& cd $(CURDIR)/$(BUILDDIR)/$@ \
-	&& docker build --build-arg CACHEBUST=$(date +%s) -f $(CURDIR)/docker/linux-build.Dockerfile -t consensys/linux-build:$(VERSION) . \
+	&& cp $(CURDIR)/docker/linux-build.Dockerfile linux-build.Dockerfile \
+	&& docker build --build-arg CACHEBUST=$(date +%s) -f linux-build.Dockerfile -t consensys/linux-build:$(VERSION) . \
 	&& touch $(CURDIR)/$(BUILDDIR)/.$@ )
 
 $(RUN_CONTAINERS): $(PACKAGES)
@@ -97,7 +98,8 @@ $(RUN_CONTAINERS): $(PACKAGES)
 	&& cp $(CURDIR)/docker/$($(PROJECT)_NAME)-start.sh $(CURDIR)/$(BUILDDIR)/docker-$($(PROJECT)_NAME) \
 	&& mv $(CURDIR)/build/$($(PROJECT)_NAME)-$($(PROJECT)_VERSION)-$(OS)-$(ARCH).tar.gz $(CURDIR)/$(BUILDDIR)/docker-$($(PROJECT)_NAME) \
 	&& cd $(CURDIR)/$(BUILDDIR)/docker-$($(PROJECT)_NAME) \
-	&& docker build --build-arg osarch=$(OS)-$(ARCH) --build-arg version=$($(PROJECT)_VERSION) -f ../../docker/$($(PROJECT)_NAME).Dockerfile -t consensys/$($(PROJECT)_NAME):$(VERSION) . \
+	&& cp ../../docker/$($(PROJECT)_NAME).Dockerfile $($(PROJECT)_NAME).Dockerfile \
+	&& docker build --build-arg osarch=$(OS)-$(ARCH) --build-arg version=$($(PROJECT)_VERSION) -f $($(PROJECT)_NAME).Dockerfile -t consensys/$($(PROJECT)_NAME):$(VERSION) . \
 	&& docker tag consensys/$($(PROJECT)_NAME):$(VERSION) consensys/$($(PROJECT)_NAME):latest \
 	&& touch $(CURDIR)/$(BUILDDIR)/.docker-$($(PROJECT)_NAME) )
 
