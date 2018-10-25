@@ -6,7 +6,7 @@ $(eval WORKDIR = $(shell cat .workdir))
 .PHONY: clean stop test
 
 .workdir:
-	$(eval WORKDIR = $(shell mktemp -t crux_relays_quorum -d))
+	$(eval WORKDIR = $(shell mktemp -t crux_relays_quorum.XXXXX -d))
 	bash config.sh $(WORKDIR) $(CURDIR)
 
 .start: .workdir
