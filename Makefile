@@ -1,42 +1,13 @@
 SHELL := /bin/bash
-BUILDDIR = build
-BUILDS = linux-64 darwin-64
-HOST_OS = $(shell uname -s | tr '[:upper:]' '[:lower:]')
-GOOS = $(HOST_OS)
-GOARCH = 64
-BINTRAY_USER = jdoe
-BINTRAY_KEY = pass
 
-QBC_NAME = qbc
-VERSION = 0.3
-
-QUORUM_NAME = quorum
-QUORUM_VERSION = v2.1.1-grpc
-QUORUM_REPO = https://github.com/ConsenSys/quorum.git
-QUORUM_BUILD = make all
-QUORUM_BINPATH = build/bin
-QUORUM_OUTFILES = geth bootnode
-
-CONSTELLATION_NAME = constellation
-CONSTELLATION_VERSION = v0.3.2
-CONSTELLATION_REPO = https://github.com/jpmorganchase/constellation.git
-CONSTELLATION_BUILD = stack --allow-different-user install && cp $(HOME)/.local/bin/constellation-node ./bin/
-CONSTELLATION_BINPATH = bin
-CONSTELLATION_OUTFILES = constellation-node
-
-CRUX_NAME = crux
-CRUX_VERSION = v1.0.3
-CRUX_REPO = https://github.com/blk-io/crux.git
-CRUX_BUILD = make setup && make
-CRUX_BINPATH = bin
-CRUX_OUTFILES = crux
+include config.mk
 
 PROJECTS = $(shell echo $(QUORUM_NAME) $(CONSTELLATION_NAME) $(CRUX_NAME) | tr '[:lower:]' '[:upper:]')
 PACKAGES = $(foreach project,$(PROJECTS), $(foreach build,$(BUILDS), $($(project)_NAME)-$($(project)_VERSION)-$(build) ) )
 RUN_CONTAINERS = $(firstword $(BUILDS))-docker-$(QUORUM_NAME) $(firstword $(BUILDS))-docker-$(CONSTELLATION_NAME) $(firstword $(BUILDS))-docker-$(CRUX_NAME)
 BUILD_CONTAINERS = docker-build-$(VERSION)
 
-.PHONY: all qbc qbc-containers qbc-tarballs clean clobber check_clobber release tag test circleci-macos
+.PHONY: all qbc qbc-containers qbc-tarballs test release tag circleci-macos clean check_clobber clobber
 .DEFAULT_GOAL := qbc
 
 ifneq ($(filter all,$(MAKECMDGOALS)),)
@@ -58,11 +29,11 @@ tarball-%: $(PACKAGES)
 $(PACKAGES): $(addprefix .build~,$(PACKAGES))
 	$(eval PROJECT = $(shell echo $(firstword $(subst -, ,$@))| tr '[:lower:]' '[:upper:]'))
 	@test -e $(BUILDDIR)/$@.tar.gz \
-	|| echo "BUILD, TAR & GZIP PACKAGE: $@" && cd $(BUILDDIR) \
+	|| ( echo "BUILD, TAR & GZIP PACKAGE: $@" && cd $(BUILDDIR) \
 	&& tar cf $@.tar -C $(CURDIR)/docs/$($(PROJECT)_NAME) . \
 	&& tar rf $@.tar -C $@/$($(PROJECT)_BINPATH) $($(PROJECT)_OUTFILES) \
 	&& find $@/$($(PROJECT)_BINPATH) -name '*.so.*' | xargs tar rf $@.tar \
-	&& gzip -f $@.tar
+	&& gzip -f $@.tar )
 
 .build~%: $(addprefix .clone~,$(PACKAGES)) | $(BUILD_CONTAINERS)
 	$(eval PACKAGE = $*)
@@ -104,14 +75,7 @@ $(RUN_CONTAINERS): $(PACKAGES)
 	&& touch $(CURDIR)/$(BUILDDIR)/.docker-$($(PROJECT)_NAME) )
 
 test: $(RUN_CONTAINERS)
-	@echo "Make sure all containers are stopped"
-	@cd tests/constellation_quorum && ( make stop && cd ../.. || cd ../.. )
-	@cd tests/crux_quorum && ( make stop && cd ../.. || cd ../.. )
-	@cd tests/crux_relays_quorum && ( make stop && cd ../.. || cd ../.. )
-	@echo "Run Tests"
-	@cd tests/constellation_quorum && make clean && ( make test && make stop || make stop )
-	@cd tests/crux_quorum && make stop && make clean && ( make test && make stop || make stop )
-	@cd tests/crux_relays_quorum && make stop && make clean && ( make test && make stop || make stop )
+	cd tests && make
 
 release: tag $(BUILDDIR)/.dockerpush $(BUILDDIR)/.tgzpush
 	git push origin master --tags
@@ -137,10 +101,11 @@ $(BUILDDIR)/qbc-$(VERSION)-%: qbc-tarballs
 	curl -T $@ -u$(BINTRAY_USER):$(BINTRAY_KEY) -H "X-Bintray-Package:qbc" -H "X-Bintray-Version:$(VERSION)" https://api.bintray.com/content/consensys/binaries/qbc/$(VERSION)/qbc-$(VERSION)-$*.tar.gz
 	curl -T $@.asc -u$(BINTRAY_USER):$(BINTRAY_KEY) -H "X-Bintray-Package:qbc" -H "X-Bintray-Version:$(VERSION)" https://api.bintray.com/content/consensys/binaries/qbc/$(VERSION)/qbc-$(VERSION)-$*.tar.gz.asc
 
-circleci-macos: tarball-darwin-64
-	mkdir -p $(BUILDDIR) && cd $(BUILDDIR) && tar czf $(QBC_NAME)-$(VERSION)-darwin-64.tar.gz $(addsuffix .tar.gz,$(filter %darwin-64,$(PACKAGES)))
+circleci-macos: 
+	mkdir -p $(BUILDDIR) && touch $(BUILDDIR)/.docker-build-$(VERSION) && $(MAKE) tarball-darwin-64
 
 clean:
+	echo $(BUILDS)
 	rm -Rf $(BUILDDIR)
 
 check_clobber:

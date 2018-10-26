@@ -26,8 +26,12 @@ Install:
   $> sh get-docker.sh
 ```
 
-Config:
-> Add /var/folders to Preferences > File Sharing
+
+Config:  
+
+- REQUIRED: `Add /var/folders to Preferences > File Sharing`
+- OPTIONAL: `Preferences > Advanced, Memory: Increase from 2 GB to 4 GB
+> NOTE: Parrallel build are more resource intensive and might require this step
 
 ## Binaries
 
@@ -41,22 +45,29 @@ Install the Glasgow Haskell Compiler: `stack setup`
 
 # Building
 
-To clean, make tarballs, containers, and run tests
+To clean, make tarballs, containers, and run tests:
 ```
-$> make all -j4
+$> make all
 ```
+To make tarballs and containers:
+```
+$> make qbc
+```
+To build the qbc tarball, run:
+```
+$> make BUILDS=linux-64 qbc-tarballs
+```
+> Note: To speed up the build you can add the -j [jobs] flag to the make command
 
-To build the tarball package for Linux, run:
-```
-$> make tarball-linux-64 -j4
-```
-> Note: Check the Makefile to make sure that `linux-64` is added to the BUILDS variable 
+### Build Targets:
 
-To build the tarball package for Mac OS X, run:
+By default, the build process will generate linux-64 and darwin-64 binaries.  You can override this modifying the BUILDS variable:
 ```
-$> make tarball-darwin-64 -j4
+make BUILDS=linux-64 all
 ```
-> Note: Check the Makefile to make sure that `darwin-64` is added to the BUILDS variable 
+The following build targets have been tested:
+- linux-64 
+- darwin-64
 
 # Testing
 
@@ -67,7 +78,7 @@ $> make test
 
 # Release
 
-Make sure the version is correct in the Makefile.
+Make sure the version is correct in config.mk.
 
 Run:
 ```

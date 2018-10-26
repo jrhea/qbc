@@ -6,14 +6,14 @@ jobs:
     steps:
       - run: brew install go berkeley-db leveldb libsodium maven haskell-stack && stack setup
       - checkout
-      - run: cat Makefile | sed 's/BUILDS = linux-64 darwin-64/BUILDS = darwin-64/' > Makefile2 && mv Makefile2 Makefile && mkdir -p build && touch build/.docker-build-0.3
-      - run: make circleci-macos
+      - run: cat config.mk | sed 's/BUILDS = linux-64 darwin-64/BUILDS = darwin-64/' > config.mk2 && mv config.mk2 config.mk && mkdir -p build
+      - run: make BUILDS=darwin-64 circleci-macos 
   linuxbuild:
     machine: true
     steps:
       - checkout
-      - run: cat Makefile | sed 's/BUILDS = linux-64 darwin-64/BUILDS = linux-64/' > Makefile2 && mv Makefile2 Makefile
-      - run: make qbc && make test
+      - run: cat config.mk | sed 's/BUILDS = linux-64 darwin-64/BUILDS = linux-64/' > config.mk2 && mv config.mk2 config.mk
+      - run: make BUILDS=linux-64 qbc && make test
 workflows:
   version: 2
   test:
