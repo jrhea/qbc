@@ -119,7 +119,7 @@ release: tag $(BUILDDIR)/.dockerpush $(BUILDDIR)/.tgzpush
 tag:
 	git tag -s $(VERSION)
 
-$(BUILDDIR)/.dockerpush: dockerlogin $(addprefix $(BUILDDIR)/,$(addsuffix .$@-$(VERSION)-, $(shell echo $(PROJECTS) | tr '[:upper:]' '[:lower:]')))
+$(BUILDDIR)/.dockerpush: $(BUILDDIR)/.dockerlogin $(addprefix $(BUILDDIR)/.docker-, $(shell echo $(PROJECTS) | tr '[:upper:]' '[:lower:]'))
 	touch $(BUILDDIR)/.dockerpush
 
 $(BUILDDIR)/.dockerlogin: 
